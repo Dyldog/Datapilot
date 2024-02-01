@@ -1,0 +1,474 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */; };
+		FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969692B6B5F1A00748A3A /* ContentView.swift */; };
+		FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCE9696B2B6B5F2000748A3A /* Assets.xcassets */; };
+		FCE969702B6B5F2000748A3A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCE9696F2B6B5F2000748A3A /* Preview Assets.xcassets */; };
+		FCE969782B6B92D000748A3A /* DylKit in Frameworks */ = {isa = PBXBuildFile; productRef = FCE969772B6B92D000748A3A /* DylKit */; };
+		FCE9697A2B6B9F2400748A3A /* LazyValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969792B6B9F2400748A3A /* LazyValue.swift */; };
+		FCE9697C2B6BA6F200748A3A /* QueryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9697B2B6BA6F200748A3A /* QueryView.swift */; };
+		FCE9697E2B6BBA5800748A3A /* RoundedCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9697D2B6BBA5800748A3A /* RoundedCorner.swift */; };
+		FCE969802B6BBB3900748A3A /* CheckView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9697F2B6BBB3900748A3A /* CheckView.swift */; };
+		FCE969822B6BCBB800748A3A /* RequestMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969812B6BCBB800748A3A /* RequestMethod.swift */; };
+		FCE969852B6BCBEB00748A3A /* Dictionary+Title.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969842B6BCBEB00748A3A /* Dictionary+Title.swift */; };
+		FCE9698B2B6BCC2C00748A3A /* Urlified.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698A2B6BCC2C00748A3A /* Urlified.swift */; };
+		FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */; };
+		FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */; };
+		FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969912B6BCC8900748A3A /* Secrets.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		FCE969642B6B5F1A00748A3A /* Datapilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Datapilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotApp.swift; sourceTree = "<group>"; };
+		FCE969692B6B5F1A00748A3A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FCE9696B2B6B5F2000748A3A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FCE9696D2B6B5F2000748A3A /* Datapilot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Datapilot.entitlements; sourceTree = "<group>"; };
+		FCE9696F2B6B5F2000748A3A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		FCE969792B6B9F2400748A3A /* LazyValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LazyValue.swift; sourceTree = "<group>"; };
+		FCE9697B2B6BA6F200748A3A /* QueryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryView.swift; sourceTree = "<group>"; };
+		FCE9697D2B6BBA5800748A3A /* RoundedCorner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoundedCorner.swift; sourceTree = "<group>"; };
+		FCE9697F2B6BBB3900748A3A /* CheckView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CheckView.swift; sourceTree = "<group>"; };
+		FCE969812B6BCBB800748A3A /* RequestMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RequestMethod.swift; sourceTree = "<group>"; };
+		FCE969842B6BCBEB00748A3A /* Dictionary+Title.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Title.swift"; sourceTree = "<group>"; };
+		FCE9698A2B6BCC2C00748A3A /* Urlified.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Urlified.swift; sourceTree = "<group>"; };
+		FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IsContainer.swift; sourceTree = "<group>"; };
+		FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		FCE969912B6BCC8900748A3A /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FCE969612B6B5F1A00748A3A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FCE969782B6B92D000748A3A /* DylKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FCE9695B2B6B5F1A00748A3A = {
+			isa = PBXGroup;
+			children = (
+				FCE9697D2B6BBA5800748A3A /* RoundedCorner.swift */,
+				FCE969662B6B5F1A00748A3A /* Datapilot */,
+				FCE969652B6B5F1A00748A3A /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		FCE969652B6B5F1A00748A3A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969642B6B5F1A00748A3A /* Datapilot.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		FCE969662B6B5F1A00748A3A /* Datapilot */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */,
+				FCE969892B6BCC1600748A3A /* Model */,
+				FCE969862B6BCBFF00748A3A /* UI */,
+				FCE969882B6BCC0E00748A3A /* Extensions */,
+				FCE9696B2B6B5F2000748A3A /* Assets.xcassets */,
+				FCE9696D2B6B5F2000748A3A /* Datapilot.entitlements */,
+				FCE9696E2B6B5F2000748A3A /* Preview Content */,
+			);
+			path = Datapilot;
+			sourceTree = "<group>";
+		};
+		FCE9696E2B6B5F2000748A3A /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				FCE9696F2B6B5F2000748A3A /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		FCE969832B6BCBC800748A3A /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				FCE9697B2B6BA6F200748A3A /* QueryView.swift */,
+				FCE969902B6BCC7300748A3A /* Content View */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+		FCE969862B6BCBFF00748A3A /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969832B6BCBC800748A3A /* Screens */,
+				FCE969872B6BCC0600748A3A /* Views */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		FCE969872B6BCC0600748A3A /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969792B6B9F2400748A3A /* LazyValue.swift */,
+				FCE9697F2B6BBB3900748A3A /* CheckView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FCE969882B6BCC0E00748A3A /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969842B6BCBEB00748A3A /* Dictionary+Title.swift */,
+				FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */,
+				FCE9698A2B6BCC2C00748A3A /* Urlified.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		FCE969892B6BCC1600748A3A /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969812B6BCBB800748A3A /* RequestMethod.swift */,
+				FCE969912B6BCC8900748A3A /* Secrets.swift */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		FCE969902B6BCC7300748A3A /* Content View */ = {
+			isa = PBXGroup;
+			children = (
+				FCE969692B6B5F1A00748A3A /* ContentView.swift */,
+				FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */,
+			);
+			path = "Content View";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FCE969632B6B5F1A00748A3A /* Datapilot */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FCE969732B6B5F2000748A3A /* Build configuration list for PBXNativeTarget "Datapilot" */;
+			buildPhases = (
+				FCE969602B6B5F1A00748A3A /* Sources */,
+				FCE969612B6B5F1A00748A3A /* Frameworks */,
+				FCE969622B6B5F1A00748A3A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Datapilot;
+			packageProductDependencies = (
+				FCE969772B6B92D000748A3A /* DylKit */,
+			);
+			productName = Datapilot;
+			productReference = FCE969642B6B5F1A00748A3A /* Datapilot.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FCE9695C2B6B5F1A00748A3A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					FCE969632B6B5F1A00748A3A = {
+						CreatedOnToolsVersion = 15.0.1;
+					};
+				};
+			};
+			buildConfigurationList = FCE9695F2B6B5F1A00748A3A /* Build configuration list for PBXProject "Datapilot" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FCE9695B2B6B5F1A00748A3A;
+			packageReferences = (
+				FCE969762B6B92D000748A3A /* XCLocalSwiftPackageReference "../DylKit" */,
+			);
+			productRefGroup = FCE969652B6B5F1A00748A3A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FCE969632B6B5F1A00748A3A /* Datapilot */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FCE969622B6B5F1A00748A3A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FCE969702B6B5F2000748A3A /* Preview Assets.xcassets in Resources */,
+				FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FCE969602B6B5F1A00748A3A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */,
+				FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */,
+				FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */,
+				FCE9698B2B6BCC2C00748A3A /* Urlified.swift in Sources */,
+				FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */,
+				FCE9697E2B6BBA5800748A3A /* RoundedCorner.swift in Sources */,
+				FCE9697A2B6B9F2400748A3A /* LazyValue.swift in Sources */,
+				FCE969852B6BCBEB00748A3A /* Dictionary+Title.swift in Sources */,
+				FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */,
+				FCE969822B6BCBB800748A3A /* RequestMethod.swift in Sources */,
+				FCE9697C2B6BA6F200748A3A /* QueryView.swift in Sources */,
+				FCE969802B6BBB3900748A3A /* CheckView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		FCE969712B6B5F2000748A3A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FCE969722B6B5F2000748A3A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		FCE969742B6B5F2000748A3A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Datapilot/Datapilot.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Datapilot/Preview Content\"";
+				DEVELOPMENT_TEAM = 6CW3378X23;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylan.Datapilot;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FCE969752B6B5F2000748A3A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Datapilot/Datapilot.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Datapilot/Preview Content\"";
+				DEVELOPMENT_TEAM = 6CW3378X23;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylan.Datapilot;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FCE9695F2B6B5F1A00748A3A /* Build configuration list for PBXProject "Datapilot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCE969712B6B5F2000748A3A /* Debug */,
+				FCE969722B6B5F2000748A3A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FCE969732B6B5F2000748A3A /* Build configuration list for PBXNativeTarget "Datapilot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FCE969742B6B5F2000748A3A /* Debug */,
+				FCE969752B6B5F2000748A3A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		FCE969762B6B92D000748A3A /* XCLocalSwiftPackageReference "../DylKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../DylKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FCE969772B6B92D000748A3A /* DylKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DylKit;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = FCE9695C2B6B5F1A00748A3A /* Project object */;
+}
