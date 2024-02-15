@@ -11,22 +11,27 @@ import DylKit
 class ContentViewModel: ObservableObject {
     
     let sharedHeaders: [String: String]
+	let dataQuery: String?
     @Published var data: Any?
     
-    init(value: Any, sharedHeaders: [String: String]) {
+    init(value: Any, sharedHeaders: [String: String], dataQuery: String?) {
+		
         self.sharedHeaders = sharedHeaders
+		self.dataQuery = dataQuery
+		
+		testJSONQuery()
         
         switch value {
         case let url as URL:
             self.loadData(request: .init(url: url)) { data in
                 onMain {
-                    self.data = data
+					self.data = self.filterData(data, with: dataQuery)
                 }
             }
         case let request as URLRequest:
             self.loadData(request: request) { data in
                 onMain {
-                    self.data = data
+                    self.data = self.filterData(data, with: dataQuery)
                 }
             }
         default:
@@ -66,4 +71,44 @@ class ContentViewModel: ObservableObject {
             
         }.resume()
     }
+	
+	private func filterData(_ data: Any?, with query: String?) -> Any! {
+		guard
+			let data, let query, !query.isEmpty, let json = (try? JSONSerialization.data(withJSONObject: data))?.string
+		else { return data }
+		
+		return JSONQuery.query(query, in: json)
+	}
+	
+	func testJSONQuery() {
+		let json = """
+		{
+		"people": [
+		  {
+			"age": 20,
+			"other": "foo",
+			"name": "Bob"
+		  },
+		  {
+			"age": 25,
+			"other": "bar",
+			"name": "Fred"
+		  },
+		  {
+			"age": 30,
+			"other": "baz",
+			"name": "George"
+		  }
+		]
+		}
+		"""
+		
+		let query = "people[?age > `20`].[name, age]"
+		
+		
+		let output = JSONQuery.query(query, in: json)
+		
+		print((try! JSONSerialization.data(withJSONObject: output)).string)
+	}
+
 }

@@ -11,8 +11,8 @@ import DylKit
 struct ContentView: View {
     @StateObject var viewModel: ContentViewModel
     
-    init(value: Any, sharedHeaders: [String: String]) {
-        self._viewModel = .init(wrappedValue: .init(value: urlified(value), sharedHeaders: sharedHeaders))
+    init(value: Any, sharedHeaders: [String: String], dataQuery: String?) {
+		self._viewModel = .init(wrappedValue: .init(value: urlified(value), sharedHeaders: sharedHeaders, dataQuery: dataQuery))
     }
     
     var inner: some View {
@@ -82,7 +82,7 @@ struct ContentView: View {
             }
         case let url as URL:
             return NavigationLink {
-                ContentView(value: url, sharedHeaders: viewModel.sharedHeaders)
+				ContentView(value: url, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
             } label: {
                 LazyValue(url: url) { value in
                     HStack {
@@ -102,7 +102,7 @@ struct ContentView: View {
             ForEach(enumerated: data) { index, element in
                 if isContainer(element) {
                     NavigationLink(destination: {
-                        ContentView(value: element, sharedHeaders: viewModel.sharedHeaders)
+						ContentView(value: element, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
                     }, label: {
                         HStack {
                             titleView(with: element)
@@ -131,7 +131,7 @@ struct ContentView: View {
         
         if isContainer(content) || content is URL {
             return NavigationLink(destination: {
-                ContentView(value: content, sharedHeaders: viewModel.sharedHeaders)
+				ContentView(value: content, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
             }, label: {
                 HStack {
                     simpleRow()
@@ -148,5 +148,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(value: "Hello", sharedHeaders: [:])
+	ContentView(value: "Hello", sharedHeaders: [:], dataQuery: nil)
 }

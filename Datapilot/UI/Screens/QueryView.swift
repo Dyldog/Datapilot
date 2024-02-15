@@ -6,10 +6,13 @@
 //
 
 import SwiftUI
+import DylKit
 
 struct QueryView: View {
     @State var urlText: String = Secrets.url // "https://swapi.dev/api/people/1"
     @State var url: URL?
+	@State var queryEnabled: Bool = true
+	@State var query: String = "data[].[id]"
     @State var headers: [(String, String, Bool)] = [("Authorization", "Bearer \(Secrets.apiKey)", true)]
     @State var method: RequestMethod = .get
     @State var postBody: String = ""
@@ -41,9 +44,28 @@ struct QueryView: View {
                     TextField("URL", text: $urlText)
                         .font(.largeTitle)
                         .navigationDestination(for: $url) { url in
-                            ContentView(value: request(with: url), sharedHeaders: sharedHeaders)
+							ContentView(value: request(with: url), sharedHeaders: sharedHeaders, dataQuery: queryEnabled ? query : nil )
                         }
                         .foregroundStyle(Color.rainbowColors[looping: 0])
+					
+					HStack {
+						Button {
+							SharedApplication.openURL(.init(string: "https://jmespath.org/examples.html")!)
+						} label: {
+							Text("Query")
+						}
+
+						Spacer()
+						
+						Toggle("Query Enabled", isOn: $queryEnabled)
+							.toggleStyle(.switch)
+							.labelsHidden()
+					}
+					
+					TextEditor(text: $query)
+						.foregroundStyle(.black)
+						.frame(height: 100)
+						.cornerRadius(10)
                     
                     VStack {
                         HStack {
@@ -112,6 +134,9 @@ struct QueryView: View {
                     
                     if method == .post {
                         TextEditor(text: $postBody)
+							.foregroundStyle(.black)
+							.frame(height: 200)
+							.cornerRadius(10)
                     }
                     
                     Spacer()

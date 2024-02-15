@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FC3284B82B7CEBF700DBBB5F /* JSONQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */; };
+		FC3284BC2B7CED1B00DBBB5F /* JMESPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284BB2B7CED1B00DBBB5F /* JMESPath.swift */; };
+		FC3284C42B7CEDE000DBBB5F /* DatapilotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */; };
+		FC850B552B7CF8FA007294D3 /* trackers.js in Resources */ = {isa = PBXBuildFile; fileRef = FC850B542B7CF8FA007294D3 /* trackers.js */; };
+		FC850B572B7CF990007294D3 /* jmespath.js in Resources */ = {isa = PBXBuildFile; fileRef = FC850B562B7CF990007294D3 /* jmespath.js */; };
 		FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */; };
 		FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969692B6B5F1A00748A3A /* ContentView.swift */; };
 		FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCE9696B2B6B5F2000748A3A /* Assets.xcassets */; };
@@ -24,7 +29,23 @@
 		FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969912B6BCC8900748A3A /* Secrets.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		FC3284C52B7CEDE000DBBB5F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = FCE9695C2B6B5F1A00748A3A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FCE969632B6B5F1A00748A3A;
+			remoteInfo = Datapilot;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONQuery.swift; sourceTree = "<group>"; };
+		FC3284BB2B7CED1B00DBBB5F /* JMESPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JMESPath.swift; sourceTree = "<group>"; };
+		FC3284C12B7CEDE000DBBB5F /* DatapilotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DatapilotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotTests.swift; sourceTree = "<group>"; };
+		FC850B542B7CF8FA007294D3 /* trackers.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = trackers.js; sourceTree = "<group>"; };
+		FC850B562B7CF990007294D3 /* jmespath.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jmespath.js; sourceTree = "<group>"; };
 		FCE969642B6B5F1A00748A3A /* Datapilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Datapilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotApp.swift; sourceTree = "<group>"; };
 		FCE969692B6B5F1A00748A3A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -44,6 +65,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		FC3284BE2B7CEDE000DBBB5F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FCE969612B6B5F1A00748A3A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -55,11 +83,31 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		FC3284B62B7CEBDD00DBBB5F /* JSON Query */ = {
+			isa = PBXGroup;
+			children = (
+				FC850B562B7CF990007294D3 /* jmespath.js */,
+				FC850B542B7CF8FA007294D3 /* trackers.js */,
+				FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */,
+				FC3284BB2B7CED1B00DBBB5F /* JMESPath.swift */,
+			);
+			path = "JSON Query";
+			sourceTree = "<group>";
+		};
+		FC3284C22B7CEDE000DBBB5F /* DatapilotTests */ = {
+			isa = PBXGroup;
+			children = (
+				FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */,
+			);
+			path = DatapilotTests;
+			sourceTree = "<group>";
+		};
 		FCE9695B2B6B5F1A00748A3A = {
 			isa = PBXGroup;
 			children = (
 				FCE9697D2B6BBA5800748A3A /* RoundedCorner.swift */,
 				FCE969662B6B5F1A00748A3A /* Datapilot */,
+				FC3284C22B7CEDE000DBBB5F /* DatapilotTests */,
 				FCE969652B6B5F1A00748A3A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -68,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				FCE969642B6B5F1A00748A3A /* Datapilot.app */,
+				FC3284C12B7CEDE000DBBB5F /* DatapilotTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,6 +183,7 @@
 		FCE969892B6BCC1600748A3A /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				FC3284B62B7CEBDD00DBBB5F /* JSON Query */,
 				FCE969812B6BCBB800748A3A /* RequestMethod.swift */,
 				FCE969912B6BCC8900748A3A /* Secrets.swift */,
 			);
@@ -152,6 +202,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		FC3284C02B7CEDE000DBBB5F /* DatapilotTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FC3284C72B7CEDE000DBBB5F /* Build configuration list for PBXNativeTarget "DatapilotTests" */;
+			buildPhases = (
+				FC3284BD2B7CEDE000DBBB5F /* Sources */,
+				FC3284BE2B7CEDE000DBBB5F /* Frameworks */,
+				FC3284BF2B7CEDE000DBBB5F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FC3284C62B7CEDE000DBBB5F /* PBXTargetDependency */,
+			);
+			name = DatapilotTests;
+			productName = DatapilotTests;
+			productReference = FC3284C12B7CEDE000DBBB5F /* DatapilotTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		FCE969632B6B5F1A00748A3A /* Datapilot */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FCE969732B6B5F2000748A3A /* Build configuration list for PBXNativeTarget "Datapilot" */;
@@ -182,6 +250,10 @@
 				LastSwiftUpdateCheck = 1500;
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
+					FC3284C02B7CEDE000DBBB5F = {
+						CreatedOnToolsVersion = 15.0.1;
+						TestTargetID = FCE969632B6B5F1A00748A3A;
+					};
 					FCE969632B6B5F1A00748A3A = {
 						CreatedOnToolsVersion = 15.0.1;
 					};
@@ -204,23 +276,41 @@
 			projectRoot = "";
 			targets = (
 				FCE969632B6B5F1A00748A3A /* Datapilot */,
+				FC3284C02B7CEDE000DBBB5F /* DatapilotTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		FC3284BF2B7CEDE000DBBB5F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FCE969622B6B5F1A00748A3A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				FCE969702B6B5F2000748A3A /* Preview Assets.xcassets in Resources */,
 				FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */,
+				FC850B572B7CF990007294D3 /* jmespath.js in Resources */,
+				FC850B552B7CF8FA007294D3 /* trackers.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		FC3284BD2B7CEDE000DBBB5F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FC3284C42B7CEDE000DBBB5F /* DatapilotTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		FCE969602B6B5F1A00748A3A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -228,11 +318,13 @@
 				FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */,
 				FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */,
 				FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */,
+				FC3284B82B7CEBF700DBBB5F /* JSONQuery.swift in Sources */,
 				FCE9698B2B6BCC2C00748A3A /* Urlified.swift in Sources */,
 				FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */,
 				FCE9697E2B6BBA5800748A3A /* RoundedCorner.swift in Sources */,
 				FCE9697A2B6B9F2400748A3A /* LazyValue.swift in Sources */,
 				FCE969852B6BCBEB00748A3A /* Dictionary+Title.swift in Sources */,
+				FC3284BC2B7CED1B00DBBB5F /* JMESPath.swift in Sources */,
 				FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */,
 				FCE969822B6BCBB800748A3A /* RequestMethod.swift in Sources */,
 				FCE9697C2B6BA6F200748A3A /* QueryView.swift in Sources */,
@@ -242,7 +334,56 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		FC3284C62B7CEDE000DBBB5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FCE969632B6B5F1A00748A3A /* Datapilot */;
+			targetProxy = FC3284C52B7CEDE000DBBB5F /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		FC3284C82B7CEDE000DBBB5F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CW3378X23;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylan.DatapilotTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Datapilot.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Datapilot";
+			};
+			name = Debug;
+		};
+		FC3284C92B7CEDE000DBBB5F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 6CW3378X23;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.dylan.DatapilotTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Datapilot.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Datapilot";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		FCE969712B6B5F2000748A3A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -436,6 +577,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FC3284C72B7CEDE000DBBB5F /* Build configuration list for PBXNativeTarget "DatapilotTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC3284C82B7CEDE000DBBB5F /* Debug */,
+				FC3284C92B7CEDE000DBBB5F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		FCE9695F2B6B5F1A00748A3A /* Build configuration list for PBXProject "Datapilot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
