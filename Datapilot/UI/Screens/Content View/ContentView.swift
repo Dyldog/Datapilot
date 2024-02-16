@@ -131,7 +131,7 @@ struct ContentView: View {
                 }
             }
 			
-			Text("END").onAppear {
+			Text("END \(Emoji.random)").frame(maxWidth: .infinity).onAppear {
 				viewModel.tryLoadNextPage()
 			}
 		}.if(viewModel.isSearchable, modified: {
