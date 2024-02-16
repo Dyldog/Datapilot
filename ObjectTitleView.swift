@@ -90,6 +90,7 @@ struct ObjectPropertyLens {
 		case pretitle
 		case posttitle
 		case next
+		case filter
 		
 		var key: String { "_\(rawValue)"}
 		
@@ -98,14 +99,15 @@ struct ObjectPropertyLens {
 			case .title: return 17
 			case .subtitle: return 15
 			case .pretitle, .posttitle: return 34
-			case .next: return 0
+			// Non-label properties
+			case .next, .filter: return 0
 			}
 		}
 		
 		var isBold: Bool {
 			switch self {
 			case .title: return true
-			case .next: return false
+			case .next, .filter: return false
 			default: return false
 			}
 		}
@@ -120,11 +122,8 @@ struct ObjectPropertyLens {
 	}
 	
 	func value(of property: ObjectProperty) -> (Any, Int)? {
-		objectAsDict?.first(where: {
-			$0.key.starts(with: property.key)
-		}).map {
-			($0.value, Int($0.key.replacingOccurrences(of: property.key, with: "", options: .anchored)) ?? 0)
-		}
+		guard let value = objectAsDict?.first(where: { $0.key.starts(with: property.key) }) else { return nil }
+		return (value.value, Int(value.key.replacingOccurrences(of: property.key, with: "", options: .anchored)) ?? 0)
 	}
 }
 

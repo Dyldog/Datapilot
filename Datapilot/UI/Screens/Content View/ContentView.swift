@@ -61,7 +61,7 @@ struct ContentView: View {
     
     func contentView(with data: Any) -> AnyView {
         switch data {
-		case let array as [Any] where array.count == 1:
+		case let array as [Any] where array.count == 1 && viewModel.searchText.isEmpty:
 			return contentView(with: urlified(array[0]))
 		case let array as [Any]:
             return listView(with: array) { value in
@@ -128,7 +128,9 @@ struct ContentView: View {
                     cellFactory(element)
                 }
             }
-        }
+		}.if(viewModel.isSearchable, modified: {
+			$0.searchable(text: $viewModel.searchText)
+		})
 		.listStyle(.plain)
 		.any
     }

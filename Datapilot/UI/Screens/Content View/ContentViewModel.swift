@@ -12,7 +12,27 @@ class ContentViewModel: ObservableObject {
     
     let sharedHeaders: [String: String]
 	let dataQuery: String?
-    @Published var data: Any?
+    @Published private var unfilteredData: Any?
+	var data: Any? {
+		guard !searchText.isEmpty else { return unfilteredData}
+		
+		let lens = ObjectPropertyLens(object: unfilteredData as Any)
+		guard let filter = lens.value(of: .filter)?.0 as? String else { return unfilteredData }
+		guard let dict = lens.objectAsDict?.filteringObjectProperties(), dict.count == 1, let listRow = dict.first as? (String, [Any])
+		else { return unfilteredData}
+		
+		let newList = listRow.1.filter {
+			guard let value = ($0 as? [String: Any])?[filter] as? CustomStringConvertible else { return false }
+			return value.description.contains(searchText)
+		}
+		
+		return (lens.objectAsDict?.objectProperties() ?? [:]).merging([listRow.0: newList]) { _, new in new }
+	}
+	@Published var searchText: String = ""
+	
+	var isSearchable: Bool {
+		return ObjectPropertyLens(object: unfilteredData as Any).value(of: .filter) != nil
+	}
     
     init(value: Any, sharedHeaders: [String: String], dataQuery: String?) {
 		
@@ -25,19 +45,19 @@ class ContentViewModel: ObservableObject {
         case let url as URL:
             self.loadData(request: .init(url: url)) { data in
                 onMain {
-					self.data = self.filterData(data, with: dataQuery)
+					self.unfilteredData = self.filterData(data, with: dataQuery)
 					self.tryLoadNextPage()
                 }
             }
         case let request as URLRequest:
             self.loadData(request: request) { data in
                 onMain {
-                    self.data = self.filterData(data, with: dataQuery)
+                    self.unfilteredData = self.filterData(data, with: dataQuery)
 					self.tryLoadNextPage()
                 }
             }
         default:
-            self.data = value
+            self.unfilteredData = value
         }
     }
     
@@ -75,10 +95,10 @@ class ContentViewModel: ObservableObject {
     }
 	
 	private func tryLoadNextPage() {
-		if let dict = data as? [String: Any], let next = ObjectPropertyLens(object: dict).value(of: .next)?.0, let url = urlified(next) as? URL {
+		if let dict = unfilteredData as? [String: Any], let next = ObjectPropertyLens(object: dict).value(of: .next)?.0, let url = urlified(next) as? URL {
 			loadData(request: .init(url: url)) { value in
 				guard let nextDict = self.filterData(value, with: self.dataQuery) as? [String: Any] else { return }
-				self.data = merging(dict, nextDict)
+				onMain { self.unfilteredData = merging(dict, nextDict) }
 				self.tryLoadNextPage()
 			}
 		}
