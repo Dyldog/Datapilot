@@ -89,6 +89,7 @@ struct ObjectPropertyLens {
 		case subtitle
 		case pretitle
 		case posttitle
+		case next
 		
 		var key: String { "_\(rawValue)"}
 		
@@ -97,12 +98,14 @@ struct ObjectPropertyLens {
 			case .title: return 17
 			case .subtitle: return 15
 			case .pretitle, .posttitle: return 34
+			case .next: return 0
 			}
 		}
 		
 		var isBold: Bool {
 			switch self {
 			case .title: return true
+			case .next: return false
 			default: return false
 			}
 		}

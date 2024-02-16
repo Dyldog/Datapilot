@@ -26,12 +26,14 @@ class ContentViewModel: ObservableObject {
             self.loadData(request: .init(url: url)) { data in
                 onMain {
 					self.data = self.filterData(data, with: dataQuery)
+					self.tryLoadNextPage()
                 }
             }
         case let request as URLRequest:
             self.loadData(request: request) { data in
                 onMain {
                     self.data = self.filterData(data, with: dataQuery)
+					self.tryLoadNextPage()
                 }
             }
         default:
@@ -72,6 +74,16 @@ class ContentViewModel: ObservableObject {
         }.resume()
     }
 	
+	private func tryLoadNextPage() {
+		if let dict = data as? [String: Any], let next = ObjectPropertyLens(object: dict).value(of: .next)?.0, let url = urlified(next) as? URL {
+			loadData(request: .init(url: url)) { value in
+				guard let nextDict = self.filterData(value, with: self.dataQuery) as? [String: Any] else { return }
+				self.data = merging(dict, nextDict)
+				self.tryLoadNextPage()
+			}
+		}
+	}
+	
 	private func filterData(_ data: Any?, with query: String?) -> Any! {
 		guard
 			let data, let query, !query.isEmpty, let json = (try? JSONSerialization.data(withJSONObject: data))?.string
@@ -110,5 +122,16 @@ class ContentViewModel: ObservableObject {
 		
 		print((try! JSONSerialization.data(withJSONObject: output)).string)
 	}
+}
 
+func merging(_ lhs: Any, _ rhs: Any) -> Any {
+	if let lhs = lhs as? [String: Any], let rhs = rhs as? [String: Any] {
+		return lhs.merging(rhs) {
+			merging($0, $1)
+		}
+	} else if let lhs = lhs as? [Any], let rhs = rhs as? [Any] {
+		return lhs + rhs
+	} else {
+		return rhs
+	}
 }
