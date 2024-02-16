@@ -10,6 +10,7 @@ import DylKit
 
 struct ContentView: View {
     @StateObject var viewModel: ContentViewModel
+	@State var showDebug: Bool = false
     
     init(value: Any, sharedHeaders: [String: String], dataQuery: String?) {
 		self._viewModel = .init(wrappedValue: .init(value: urlified(value), sharedHeaders: sharedHeaders, dataQuery: dataQuery))
@@ -28,6 +29,17 @@ struct ContentView: View {
         inner.if((viewModel.data as? [String: Any])?.titleValue) { view, title in
             view.navigationTitle(Text(title))
         }
+		.toolbar {
+			Button {
+				showDebug = true
+			} label: {
+				Image(systemName: "ant.fill")
+			}
+
+		}
+		.sheet(isPresented: $showDebug) {
+			ObjectDebugView(object: viewModel.data as Any)
+		}
     }
     
     var loadingView: some View {
@@ -45,55 +57,48 @@ struct ContentView: View {
         }.any
     }
     
-    func titleView(with data: Any) -> AnyView {
-        switch data {
-        case let string as String:
-            return Text(string).any
-        case let array as [Any]:
-            return Text("\(array.count) items").any
-        case let dictionary as [String: Any]:
-            return Text(dictionary.titleValue ?? "").any
-        case let url as URL:
-            return LazyValue(url: url) { value in
-                titleView(with: value)
-            }.any
-        case let bool as Bool:
-            return Text(bool ? "true" : "false").any
-        case let float as Float:
-            return Text("\(float)").any
-        case let int as Int:
-            return Text("\(int)").any
-        case let null as NSNull:
-            return Text("null").any
-        default:
-            return Text("TODO").any
-        }
-    }
+    
     
     func contentView(with data: Any) -> AnyView {
         switch data {
-        case let array as [Any]:
+		case let array as [Any] where array.count == 1:
+			return contentView(with: urlified(array[0]))
+		case let array as [Any]:
             return listView(with: array) {
                 contentView(with: urlified($0))
             }
         case let dictionary as [String: Any]:
-            return listView(with: dictionary.map { ($0, $1) }) {
-                rowView(with: $0, and: urlified($1))
-            }
+			return VStack(spacing: 0) {
+				if dictionary.hasObjectProperties {
+					ObjectTitleView(object: dictionary, requestHeaders: viewModel.sharedHeaders)
+						.padding(.horizontal).padding(.bottom)
+				}
+				
+				if dictionary.filteringObjectProperties().keys.count == 1 {
+					contentView(with: urlified(dictionary.filteringObjectProperties().values.first!))
+				} else {
+					listView(with: dictionary.filteringObjectProperties().map { ($0, $1) }) { key, value in
+						rowView(with: key, and: urlified(value))
+					}
+				}
+				Spacer()
+			}.any
         case let url as URL:
-            return NavigationLink {
-				ContentView(value: url, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
-            } label: {
-                LazyValue(url: url) { value in
-                    HStack {
-                        titleView(with: value)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                    }.any
-                }
+            return LazyValue(url: url, headers: viewModel.sharedHeaders) { value in
+				contentView(with: value)
+				
+//				NavigationLink {
+//					ContentView(value: value, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
+//				} label: {
+//                    HStack {
+//                        ObjectTitleView(object: value, requestHeaders: viewModel.sharedHeaders)
+//                        Spacer()
+//                        Image(systemName: "chevron.right")
+//                    }
+//                }.any
             }.any
         default:
-            return titleView(with: data)
+			return ObjectTitleView(object: data, requestHeaders: viewModel.sharedHeaders).any
         }
     }
     
@@ -105,7 +110,7 @@ struct ContentView: View {
 						ContentView(value: element, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
                     }, label: {
                         HStack {
-                            titleView(with: element)
+                            ObjectTitleView(object: element, requestHeaders: viewModel.sharedHeaders)
                             Spacer()
 #if canImport(UIKit)
 #else
@@ -117,15 +122,16 @@ struct ContentView: View {
                     cellFactory(element)
                 }
             }
-        }.any
+        }
+		.listStyle(.plain)
+		.any
     }
     
     func rowView(with title: String, and content: Any) -> AnyView {
         func simpleRow() -> AnyView {
-            HStack {
-                Text(title)
-                Spacer()
-                titleView(with: content)
+            HStack() {
+                ObjectTitleView(object: title, requestHeaders: viewModel.sharedHeaders)
+                ObjectTitleView(object: content, requestHeaders: viewModel.sharedHeaders, isSubLabel: true)
             }.any
         }
         
@@ -145,6 +151,20 @@ struct ContentView: View {
             return simpleRow()
         }
     }
+}
+
+extension Dictionary where Key == String {
+	func objectProperties() -> Self? {
+		let props = self.filter { ObjectPropertyLens.ObjectProperty.allKeys.contains($0.key) }
+		return props.keys.isEmpty ? nil : props
+	}
+	
+	var hasObjectProperties: Bool { objectProperties() != nil }
+	
+	func filteringObjectProperties() -> Self {
+		self
+			.filter { !ObjectPropertyLens.ObjectProperty.allKeys.contains($0.key) }
+	}
 }
 
 #Preview {

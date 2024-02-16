@@ -12,7 +12,7 @@ struct DatapilotApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                QueryView()
+                QueryList()
             }
         }
     }

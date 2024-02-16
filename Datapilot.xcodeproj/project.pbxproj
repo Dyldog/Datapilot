@@ -12,6 +12,9 @@
 		FC3284C42B7CEDE000DBBB5F /* DatapilotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */; };
 		FC850B552B7CF8FA007294D3 /* trackers.js in Resources */ = {isa = PBXBuildFile; fileRef = FC850B542B7CF8FA007294D3 /* trackers.js */; };
 		FC850B572B7CF990007294D3 /* jmespath.js in Resources */ = {isa = PBXBuildFile; fileRef = FC850B562B7CF990007294D3 /* jmespath.js */; };
+		FC850B592B7DB0B9007294D3 /* ObjectTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B582B7DB0B9007294D3 /* ObjectTitleView.swift */; };
+		FC850B5C2B7DD2CA007294D3 /* ObjectDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */; };
+		FC850B5E2B7DD740007294D3 /* QueryList.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B5D2B7DD740007294D3 /* QueryList.swift */; };
 		FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */; };
 		FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969692B6B5F1A00748A3A /* ContentView.swift */; };
 		FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCE9696B2B6B5F2000748A3A /* Assets.xcassets */; };
@@ -46,6 +49,9 @@
 		FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotTests.swift; sourceTree = "<group>"; };
 		FC850B542B7CF8FA007294D3 /* trackers.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = trackers.js; sourceTree = "<group>"; };
 		FC850B562B7CF990007294D3 /* jmespath.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jmespath.js; sourceTree = "<group>"; };
+		FC850B582B7DB0B9007294D3 /* ObjectTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectTitleView.swift; sourceTree = SOURCE_ROOT; };
+		FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectDebugView.swift; sourceTree = "<group>"; };
+		FC850B5D2B7DD740007294D3 /* QueryList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryList.swift; sourceTree = "<group>"; };
 		FCE969642B6B5F1A00748A3A /* Datapilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Datapilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotApp.swift; sourceTree = "<group>"; };
 		FCE969692B6B5F1A00748A3A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -102,6 +108,14 @@
 			path = DatapilotTests;
 			sourceTree = "<group>";
 		};
+		FC850B5A2B7DD2BB007294D3 /* Object Debug View */ = {
+			isa = PBXGroup;
+			children = (
+				FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */,
+			);
+			path = "Object Debug View";
+			sourceTree = "<group>";
+		};
 		FCE9695B2B6B5F1A00748A3A = {
 			isa = PBXGroup;
 			children = (
@@ -147,6 +161,8 @@
 			isa = PBXGroup;
 			children = (
 				FCE9697B2B6BA6F200748A3A /* QueryView.swift */,
+				FC850B5D2B7DD740007294D3 /* QueryList.swift */,
+				FC850B5A2B7DD2BB007294D3 /* Object Debug View */,
 				FCE969902B6BCC7300748A3A /* Content View */,
 			);
 			path = Screens;
@@ -164,6 +180,7 @@
 		FCE969872B6BCC0600748A3A /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				FC850B582B7DB0B9007294D3 /* ObjectTitleView.swift */,
 				FCE969792B6B9F2400748A3A /* LazyValue.swift */,
 				FCE9697F2B6BBB3900748A3A /* CheckView.swift */,
 			);
@@ -316,6 +333,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */,
+				FC850B5E2B7DD740007294D3 /* QueryList.swift in Sources */,
 				FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */,
 				FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */,
 				FC3284B82B7CEBF700DBBB5F /* JSONQuery.swift in Sources */,
@@ -324,11 +342,13 @@
 				FCE9697E2B6BBA5800748A3A /* RoundedCorner.swift in Sources */,
 				FCE9697A2B6B9F2400748A3A /* LazyValue.swift in Sources */,
 				FCE969852B6BCBEB00748A3A /* Dictionary+Title.swift in Sources */,
+				FC850B5C2B7DD2CA007294D3 /* ObjectDebugView.swift in Sources */,
 				FC3284BC2B7CED1B00DBBB5F /* JMESPath.swift in Sources */,
 				FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */,
 				FCE969822B6BCBB800748A3A /* RequestMethod.swift in Sources */,
 				FCE9697C2B6BA6F200748A3A /* QueryView.swift in Sources */,
 				FCE969802B6BBB3900748A3A /* CheckView.swift in Sources */,
+				FC850B592B7DB0B9007294D3 /* ObjectTitleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

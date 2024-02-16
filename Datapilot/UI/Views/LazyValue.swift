@@ -12,14 +12,22 @@ class ValueLoader: ObservableObject {
     @Published var value: Any?
     
     private let url: URL
-
-    init(url: URL) {
+	private let headers: [String: String]
+	
+    init(url: URL, headers: [String: String]) {
         self.url = url
+		self.headers = headers
         load()
     }
 
     func load() {
-        URLSession.shared.dataTask(with: .init(url: url)) { data, resposne, error in
+		var request: URLRequest = .init(url: url)
+		
+		headers.forEach {
+			request.setValue($0.value, forHTTPHeaderField: $0.key)
+		}
+		
+        URLSession.shared.dataTask(with: request) { data, resposne, error in
             guard let data else { return }
             do {
                 let json = try JSONSerialization.jsonObject(with: data, options: [])
@@ -37,9 +45,9 @@ struct LazyValue: View {
     
     @StateObject var loader: ValueLoader
     
-    init(url: URL, onLoad: @escaping (Any) -> AnyView) {
+	init(url: URL, headers: [String: String], onLoad: @escaping (Any) -> AnyView) {
         self.onLoad = onLoad
-        self._loader = .init(wrappedValue: .init(url: url))
+        self._loader = .init(wrappedValue: .init(url: url, headers: headers))
     }
     
     var body: some View {

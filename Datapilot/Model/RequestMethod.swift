@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum RequestMethod: Hashable, CaseIterable {
+enum RequestMethod: Hashable, CaseIterable, Codable {
     case get
     case post
     case put
