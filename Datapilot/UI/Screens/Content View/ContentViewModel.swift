@@ -105,7 +105,6 @@ class ContentViewModel: ObservableObject {
 			loadData(request: .init(url: url)) { value in
 				onMain {
 					self.unqueriedData = merging(self.unqueriedData as Any, value as Any)
-					self.tryLoadNextPage()
 				}
 			}
 		}
