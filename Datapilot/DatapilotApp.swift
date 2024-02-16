@@ -22,6 +22,6 @@ struct DatapilotApp: App {
 let titles = [
 	"Frontend For Frontend",
 	"Fr0nt3nd 4 H4x0rz",
-	"💩",
+	Emoji.random,
 	"Backend SUX"
 ]

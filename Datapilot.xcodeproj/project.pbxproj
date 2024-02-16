@@ -15,6 +15,7 @@
 		FC850B592B7DB0B9007294D3 /* ObjectTitleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B582B7DB0B9007294D3 /* ObjectTitleView.swift */; };
 		FC850B5C2B7DD2CA007294D3 /* ObjectDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */; };
 		FC850B5E2B7DD740007294D3 /* QueryList.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B5D2B7DD740007294D3 /* QueryList.swift */; };
+		FCAAE85C2B7F2C1100F5120B /* Emojis.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAAE85B2B7F2C1100F5120B /* Emojis.swift */; };
 		FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */; };
 		FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969692B6B5F1A00748A3A /* ContentView.swift */; };
 		FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FCE9696B2B6B5F2000748A3A /* Assets.xcassets */; };
@@ -52,6 +53,7 @@
 		FC850B582B7DB0B9007294D3 /* ObjectTitleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectTitleView.swift; sourceTree = SOURCE_ROOT; };
 		FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectDebugView.swift; sourceTree = "<group>"; };
 		FC850B5D2B7DD740007294D3 /* QueryList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryList.swift; sourceTree = "<group>"; };
+		FCAAE85B2B7F2C1100F5120B /* Emojis.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Emojis.swift; sourceTree = SOURCE_ROOT; };
 		FCE969642B6B5F1A00748A3A /* Datapilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Datapilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCE969672B6B5F1A00748A3A /* DatapilotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotApp.swift; sourceTree = "<group>"; };
 		FCE969692B6B5F1A00748A3A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 		FCE969882B6BCC0E00748A3A /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
+				FCAAE85B2B7F2C1100F5120B /* Emojis.swift */,
 				FCE969842B6BCBEB00748A3A /* Dictionary+Title.swift */,
 				FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */,
 				FCE9698A2B6BCC2C00748A3A /* Urlified.swift */,
@@ -332,6 +335,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCAAE85C2B7F2C1100F5120B /* Emojis.swift in Sources */,
 				FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */,
 				FC850B5E2B7DD740007294D3 /* QueryList.swift in Sources */,
 				FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */,
