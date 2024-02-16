@@ -12,7 +12,9 @@ class ContentViewModel: ObservableObject {
     
     let sharedHeaders: [String: String]
 	let dataQuery: String?
+	
     @Published private var unfilteredData: Any?
+	
 	var data: Any? {
 		guard !searchText.isEmpty else { return unfilteredData}
 		
@@ -46,14 +48,12 @@ class ContentViewModel: ObservableObject {
             self.loadData(request: .init(url: url)) { data in
                 onMain {
 					self.unfilteredData = self.filterData(data, with: dataQuery)
-					self.tryLoadNextPage()
                 }
             }
         case let request as URLRequest:
             self.loadData(request: request) { data in
                 onMain {
                     self.unfilteredData = self.filterData(data, with: dataQuery)
-					self.tryLoadNextPage()
                 }
             }
         default:
@@ -94,7 +94,7 @@ class ContentViewModel: ObservableObject {
         }.resume()
     }
 	
-	private func tryLoadNextPage() {
+	func tryLoadNextPage() {
 		if let dict = unfilteredData as? [String: Any], let next = ObjectPropertyLens(object: dict).value(of: .next)?.0, let url = urlified(next) as? URL {
 			loadData(request: .init(url: url)) { value in
 				guard let nextDict = self.filterData(value, with: self.dataQuery) as? [String: Any] else { return }

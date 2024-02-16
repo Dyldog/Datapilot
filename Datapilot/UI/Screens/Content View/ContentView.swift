@@ -128,6 +128,10 @@ struct ContentView: View {
                     cellFactory(element)
                 }
             }
+			
+			Text("").onAppear {
+				viewModel.tryLoadNextPage()
+			}
 		}.if(viewModel.isSearchable, modified: {
 			$0.searchable(text: $viewModel.searchText)
 		})
