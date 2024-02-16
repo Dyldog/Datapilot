@@ -13,7 +13,12 @@ class ContentViewModel: ObservableObject {
     let sharedHeaders: [String: String]
 	let dataQuery: String?
 	
-    @Published private var unfilteredData: Any?
+	// The data before we've used the JMESPath query on it
+	// We need to save it (and requery the data when we get a new page) so that sorting is done on everything
+	@Published private var unqueriedData: Any?
+	
+	// The data before it's been filtered by the search text
+	private var unfilteredData: Any? { self.filterData(unqueriedData, with: dataQuery) }
 	
 	var data: Any? {
 		guard !searchText.isEmpty else { return unfilteredData}
@@ -30,6 +35,7 @@ class ContentViewModel: ObservableObject {
 		
 		return (lens.objectAsDict?.objectProperties() ?? [:]).merging([listRow.0: newList]) { _, new in new }
 	}
+	
 	@Published var searchText: String = ""
 	
 	var isSearchable: Bool {
@@ -47,17 +53,17 @@ class ContentViewModel: ObservableObject {
         case let url as URL:
             self.loadData(request: .init(url: url)) { data in
                 onMain {
-					self.unfilteredData = self.filterData(data, with: dataQuery)
+					self.unqueriedData = data
                 }
             }
         case let request as URLRequest:
             self.loadData(request: request) { data in
                 onMain {
-                    self.unfilteredData = self.filterData(data, with: dataQuery)
+					self.unqueriedData = data
                 }
             }
         default:
-            self.unfilteredData = value
+			self.unqueriedData = value
         }
     }
     
@@ -97,9 +103,10 @@ class ContentViewModel: ObservableObject {
 	func tryLoadNextPage() {
 		if let dict = unfilteredData as? [String: Any], let next = ObjectPropertyLens(object: dict).value(of: .next)?.0, let url = urlified(next) as? URL {
 			loadData(request: .init(url: url)) { value in
-				guard let nextDict = self.filterData(value, with: self.dataQuery) as? [String: Any] else { return }
-				onMain { self.unfilteredData = merging(dict, nextDict) }
-				self.tryLoadNextPage()
+				onMain {
+					self.unqueriedData = merging(self.unqueriedData as Any, value as Any)
+					self.tryLoadNextPage()
+				}
 			}
 		}
 	}

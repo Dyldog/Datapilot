@@ -75,7 +75,7 @@ struct ContentView: View {
             }
         case let dictionary as [String: Any]:
 			return VStack(spacing: 0) {
-				if dictionary.hasObjectProperties {
+				if dictionary.hasVisibleProperties {
 					ObjectTitleView(object: dictionary, requestHeaders: viewModel.sharedHeaders)
 						.padding(.horizontal).padding(.bottom)
 				}
@@ -103,6 +103,8 @@ struct ContentView: View {
 //                    }
 //                }.any
             }.any
+		case nil:
+			return Text("Got nil").any
         default:
 			return ObjectTitleView(object: data, requestHeaders: viewModel.sharedHeaders).any
         }
@@ -129,7 +131,7 @@ struct ContentView: View {
                 }
             }
 			
-			Text("").onAppear {
+			Text("END").onAppear {
 				viewModel.tryLoadNextPage()
 			}
 		}.if(viewModel.isSearchable, modified: {
@@ -166,12 +168,19 @@ struct ContentView: View {
 }
 
 extension Dictionary where Key == String {
-	func objectProperties() -> Self? {
-		let props = self.filter { ObjectPropertyLens.ObjectProperty.allKeys.contains($0.key) }
+	func objectProperties(visibleOnly: Bool = false) -> Self? {
+		let props = self.filter { property in
+			guard
+				let key = ObjectPropertyLens.ObjectProperty(rawValue: String(property.key))
+			else { return false }
+			
+			return (visibleOnly ? key.isVisibleProperty : true)
+		}
 		return props.keys.isEmpty ? nil : props
 	}
 	
 	var hasObjectProperties: Bool { objectProperties() != nil }
+	var hasVisibleProperties: Bool { objectProperties(visibleOnly: true) != nil }
 	
 	func filteringObjectProperties() -> Self {
 		self

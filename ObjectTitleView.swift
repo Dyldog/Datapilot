@@ -94,6 +94,19 @@ struct ObjectPropertyLens {
 		
 		var key: String { "_\(rawValue)"}
 		
+		/// Initialises with a "key" of the form "_<RAW_VALUE>"
+		init?(key: String) {
+			self.init(rawValue: String(key.dropFirst()))
+		}
+		
+		var isVisibleProperty: Bool {
+			switch self {
+			case .title, .subtitle, .pretitle, .posttitle:
+				return true
+			case .next, .filter:
+				return false
+			}
+		}
 		var defaultSize: Int {
 			switch self {
 			case .title: return 17

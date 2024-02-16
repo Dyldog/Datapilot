@@ -21,9 +21,6 @@ struct ObjectDebugView: View {
 		}
 	}
 	var body: some View {
-		ScrollView {
-			Text(objectText)
-				.padding()
-		}
+		TextEditor(text: .constant(objectText))
 	}
 }
