@@ -13,7 +13,15 @@ struct DatapilotApp: App {
         WindowGroup {
             NavigationView {
                 QueryList()
+					.navigationTitle(titles.randomElement()!)
             }
         }
     }
 }
+
+let titles = [
+	"Frontend For Frontend",
+	"Fr0nt3nd 4 H4x0rz",
+	"💩",
+	"Backend SUX"
+]
