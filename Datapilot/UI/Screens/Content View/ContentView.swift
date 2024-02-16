@@ -64,8 +64,14 @@ struct ContentView: View {
 		case let array as [Any] where array.count == 1:
 			return contentView(with: urlified(array[0]))
 		case let array as [Any]:
-            return listView(with: array) {
-                contentView(with: urlified($0))
+            return listView(with: array) { value in
+//                contentView(with: urlified($0))
+				NavigationLink {
+					ContentView(value: urlified(value), sharedHeaders: viewModel.sharedHeaders, dataQuery: viewModel.dataQuery)
+				} label: {
+					ObjectTitleView(object: urlified(value), requestHeaders: viewModel.sharedHeaders)
+				}
+
             }
         case let dictionary as [String: Any]:
 			return VStack(spacing: 0) {
