@@ -1,1672 +1,2296 @@
-(function(exports) {
-  "use strict";
-
-  function isArray(obj) {
-    if (obj !== null) {
-      return Object.prototype.toString.call(obj) === "[object Array]";
-    } else {
-      return false;
-    }
-  }
-
-  function isObject(obj) {
-    if (obj !== null) {
-      return Object.prototype.toString.call(obj) === "[object Object]";
-    } else {
-      return false;
-    }
-  }
-
-  function strictDeepEqual(first, second) {
-    // Check the scalar case first.
-    if (first === second) {
-      return true;
-    }
-
-    // Check if they are the same type.
-    var firstType = Object.prototype.toString.call(first);
-    if (firstType !== Object.prototype.toString.call(second)) {
-      return false;
-    }
-    // We know that first and second have the same type so we can just check the
-    // first type from now on.
-    if (isArray(first) === true) {
-      // Short circuit if they're not the same length;
-      if (first.length !== second.length) {
-        return false;
-      }
-      for (var i = 0; i < first.length; i++) {
-        if (strictDeepEqual(first[i], second[i]) === false) {
-          return false;
-        }
-      }
-      return true;
-    }
-    if (isObject(first) === true) {
-      // An object is equal if it has the same key/value pairs.
-      var keysSeen = {};
-      for (var key in first) {
-        if (hasOwnProperty.call(first, key)) {
-          if (strictDeepEqual(first[key], second[key]) === false) {
-            return false;
-          }
-          keysSeen[key] = true;
-        }
-      }
-      // Now check that there aren't any keys in second that weren't
-      // in first.
-      for (var key2 in second) {
-        if (hasOwnProperty.call(second, key2)) {
-          if (keysSeen[key2] !== true) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    return false;
-  }
-
-  function isFalse(obj) {
-    // From the spec:
-    // A false value corresponds to the following values:
-    // Empty list
-    // Empty object
-    // Empty string
-    // False boolean
-    // null value
-
-    // First check the scalar values.
-    if (obj === "" || obj === false || obj === null) {
-        return true;
-    } else if (isArray(obj) && obj.length === 0) {
-        // Check for an empty array.
-        return true;
-    } else if (isObject(obj)) {
-        // Check for an empty object.
-        for (var key in obj) {
-            // If there are any keys, then
-            // the object is not empty so the object
-            // is not false.
-            if (obj.hasOwnProperty(key)) {
-              return false;
-            }
-        }
-        return true;
-    } else {
-        return false;
-    }
-  }
-
-  function objValues(obj) {
-    var keys = Object.keys(obj);
-    var values = [];
-    for (var i = 0; i < keys.length; i++) {
-      values.push(obj[keys[i]]);
-    }
-    return values;
-  }
-
-  function merge(a, b) {
-      var merged = {};
-      for (var key in a) {
-          merged[key] = a[key];
-      }
-      for (var key2 in b) {
-          merged[key2] = b[key2];
-      }
-      return merged;
-  }
-
-  var trimLeft;
-  if (typeof String.prototype.trimLeft === "function") {
-    trimLeft = function(str) {
-      return str.trimLeft();
-    };
-  } else {
-    trimLeft = function(str) {
-      return str.match(/^\s*(.*)/)[1];
-    };
-  }
-
-  // Type constants used to define functions.
-  var TYPE_NUMBER = 0;
-  var TYPE_ANY = 1;
-  var TYPE_STRING = 2;
-  var TYPE_ARRAY = 3;
-  var TYPE_OBJECT = 4;
-  var TYPE_BOOLEAN = 5;
-  var TYPE_EXPREF = 6;
-  var TYPE_NULL = 7;
-  var TYPE_ARRAY_NUMBER = 8;
-  var TYPE_ARRAY_STRING = 9;
-  var TYPE_NAME_TABLE = {
-    0: 'number',
-    1: 'any',
-    2: 'string',
-    3: 'array',
-    4: 'object',
-    5: 'boolean',
-    6: 'expression',
-    7: 'null',
-    8: 'Array<number>',
-    9: 'Array<string>'
-  };
-
-  var TOK_EOF = "EOF";
-  var TOK_UNQUOTEDIDENTIFIER = "UnquotedIdentifier";
-  var TOK_QUOTEDIDENTIFIER = "QuotedIdentifier";
-  var TOK_RBRACKET = "Rbracket";
-  var TOK_RPAREN = "Rparen";
-  var TOK_COMMA = "Comma";
-  var TOK_COLON = "Colon";
-  var TOK_RBRACE = "Rbrace";
-  var TOK_NUMBER = "Number";
-  var TOK_CURRENT = "Current";
-  var TOK_EXPREF = "Expref";
-  var TOK_PIPE = "Pipe";
-  var TOK_OR = "Or";
-  var TOK_AND = "And";
-  var TOK_EQ = "EQ";
-  var TOK_GT = "GT";
-  var TOK_LT = "LT";
-  var TOK_GTE = "GTE";
-  var TOK_LTE = "LTE";
-  var TOK_NE = "NE";
-  var TOK_FLATTEN = "Flatten";
-  var TOK_STAR = "Star";
-  var TOK_FILTER = "Filter";
-  var TOK_DOT = "Dot";
-  var TOK_NOT = "Not";
-  var TOK_LBRACE = "Lbrace";
-  var TOK_LBRACKET = "Lbracket";
-  var TOK_LPAREN= "Lparen";
-  var TOK_LITERAL= "Literal";
-
-  // The "&", "[", "<", ">" tokens
-  // are not in basicToken because
-  // there are two token variants
-  // ("&&", "[?", "<=", ">=").  This is specially handled
-  // below.
-
-  var basicTokens = {
-    ".": TOK_DOT,
-    "*": TOK_STAR,
-    ",": TOK_COMMA,
-    ":": TOK_COLON,
-    "{": TOK_LBRACE,
-    "}": TOK_RBRACE,
-    "]": TOK_RBRACKET,
-    "(": TOK_LPAREN,
-    ")": TOK_RPAREN,
-    "@": TOK_CURRENT
-  };
-
-  var operatorStartToken = {
-      "<": true,
-      ">": true,
-      "=": true,
-      "!": true
-  };
-
-  var skipChars = {
-      " ": true,
-      "\t": true,
-      "\n": true
-  };
-
-
-  function isAlpha(ch) {
-      return (ch >= "a" && ch <= "z") ||
-             (ch >= "A" && ch <= "Z") ||
-             ch === "_";
-  }
-
-  function isNum(ch) {
-      return (ch >= "0" && ch <= "9") ||
-             ch === "-";
-  }
-  function isAlphaNum(ch) {
-      return (ch >= "a" && ch <= "z") ||
-             (ch >= "A" && ch <= "Z") ||
-             (ch >= "0" && ch <= "9") ||
-             ch === "_";
-  }
-
-  function Lexer() {
-  }
-  Lexer.prototype = {
-      tokenize: function(stream) {
-          var tokens = [];
-          this._current = 0;
-          var start;
-          var identifier;
-          var token;
-          while (this._current < stream.length) {
-              if (isAlpha(stream[this._current])) {
-                  start = this._current;
-                  identifier = this._consumeUnquotedIdentifier(stream);
-                  tokens.push({type: TOK_UNQUOTEDIDENTIFIER,
-                               value: identifier,
-                               start: start});
-              } else if (basicTokens[stream[this._current]] !== undefined) {
-                  tokens.push({type: basicTokens[stream[this._current]],
-                              value: stream[this._current],
-                              start: this._current});
-                  this._current++;
-              } else if (isNum(stream[this._current])) {
-                  token = this._consumeNumber(stream);
-                  tokens.push(token);
-              } else if (stream[this._current] === "[") {
-                  // No need to increment this._current.  This happens
-                  // in _consumeLBracket
-                  token = this._consumeLBracket(stream);
-                  tokens.push(token);
-              } else if (stream[this._current] === "\"") {
-                  start = this._current;
-                  identifier = this._consumeQuotedIdentifier(stream);
-                  tokens.push({type: TOK_QUOTEDIDENTIFIER,
-                               value: identifier,
-                               start: start});
-              } else if (stream[this._current] === "'") {
-                  start = this._current;
-                  identifier = this._consumeRawStringLiteral(stream);
-                  tokens.push({type: TOK_LITERAL,
-                               value: identifier,
-                               start: start});
-              } else if (stream[this._current] === "`") {
-                  start = this._current;
-                  var literal = this._consumeLiteral(stream);
-                  tokens.push({type: TOK_LITERAL,
-                               value: literal,
-                               start: start});
-              } else if (operatorStartToken[stream[this._current]] !== undefined) {
-                  tokens.push(this._consumeOperator(stream));
-              } else if (skipChars[stream[this._current]] !== undefined) {
-                  // Ignore whitespace.
-                  this._current++;
-              } else if (stream[this._current] === "&") {
-                  start = this._current;
-                  this._current++;
-                  if (stream[this._current] === "&") {
-                      this._current++;
-                      tokens.push({type: TOK_AND, value: "&&", start: start});
-                  } else {
-                      tokens.push({type: TOK_EXPREF, value: "&", start: start});
-                  }
-              } else if (stream[this._current] === "|") {
-                  start = this._current;
-                  this._current++;
-                  if (stream[this._current] === "|") {
-                      this._current++;
-                      tokens.push({type: TOK_OR, value: "||", start: start});
-                  } else {
-                      tokens.push({type: TOK_PIPE, value: "|", start: start});
-                  }
-              } else {
-                  var error = new Error("Unknown character:" + stream[this._current]);
-                  error.name = "LexerError";
-                  throw error;
-              }
-          }
-          return tokens;
-      },
-
-      _consumeUnquotedIdentifier: function(stream) {
-          var start = this._current;
-          this._current++;
-          while (this._current < stream.length && isAlphaNum(stream[this._current])) {
-              this._current++;
-          }
-          return stream.slice(start, this._current);
-      },
-
-      _consumeQuotedIdentifier: function(stream) {
-          var start = this._current;
-          this._current++;
-          var maxLength = stream.length;
-          while (stream[this._current] !== "\"" && this._current < maxLength) {
-              // You can escape a double quote and you can escape an escape.
-              var current = this._current;
-              if (stream[current] === "\\" && (stream[current + 1] === "\\" ||
-                                               stream[current + 1] === "\"")) {
-                  current += 2;
-              } else {
-                  current++;
-              }
-              this._current = current;
-          }
-          this._current++;
-          return JSON.parse(stream.slice(start, this._current));
-      },
-
-      _consumeRawStringLiteral: function(stream) {
-          var start = this._current;
-          this._current++;
-          var maxLength = stream.length;
-          while (stream[this._current] !== "'" && this._current < maxLength) {
-              // You can escape a single quote and you can escape an escape.
-              var current = this._current;
-              if (stream[current] === "\\" && (stream[current + 1] === "\\" ||
-                                               stream[current + 1] === "'")) {
-                  current += 2;
-              } else {
-                  current++;
-              }
-              this._current = current;
-          }
-          this._current++;
-          var literal = stream.slice(start + 1, this._current - 1);
-          return literal.replace("\\'", "'");
-      },
-
-      _consumeNumber: function(stream) {
-          var start = this._current;
-          this._current++;
-          var maxLength = stream.length;
-          while (isNum(stream[this._current]) && this._current < maxLength) {
-              this._current++;
-          }
-          var value = parseInt(stream.slice(start, this._current));
-          return {type: TOK_NUMBER, value: value, start: start};
-      },
-
-      _consumeLBracket: function(stream) {
-          var start = this._current;
-          this._current++;
-          if (stream[this._current] === "?") {
-              this._current++;
-              return {type: TOK_FILTER, value: "[?", start: start};
-          } else if (stream[this._current] === "]") {
-              this._current++;
-              return {type: TOK_FLATTEN, value: "[]", start: start};
-          } else {
-              return {type: TOK_LBRACKET, value: "[", start: start};
-          }
-      },
-
-      _consumeOperator: function(stream) {
-          var start = this._current;
-          var startingChar = stream[start];
-          this._current++;
-          if (startingChar === "!") {
-              if (stream[this._current] === "=") {
-                  this._current++;
-                  return {type: TOK_NE, value: "!=", start: start};
-              } else {
-                return {type: TOK_NOT, value: "!", start: start};
-              }
-          } else if (startingChar === "<") {
-              if (stream[this._current] === "=") {
-                  this._current++;
-                  return {type: TOK_LTE, value: "<=", start: start};
-              } else {
-                  return {type: TOK_LT, value: "<", start: start};
-              }
-          } else if (startingChar === ">") {
-              if (stream[this._current] === "=") {
-                  this._current++;
-                  return {type: TOK_GTE, value: ">=", start: start};
-              } else {
-                  return {type: TOK_GT, value: ">", start: start};
-              }
-          } else if (startingChar === "=") {
-              if (stream[this._current] === "=") {
-                  this._current++;
-                  return {type: TOK_EQ, value: "==", start: start};
-              }
-          }
-      },
-
-      _consumeLiteral: function(stream) {
-          this._current++;
-          var start = this._current;
-          var maxLength = stream.length;
-          var literal;
-          while(stream[this._current] !== "`" && this._current < maxLength) {
-              // You can escape a literal char or you can escape the escape.
-              var current = this._current;
-              if (stream[current] === "\\" && (stream[current + 1] === "\\" ||
-                                               stream[current + 1] === "`")) {
-                  current += 2;
-              } else {
-                  current++;
-              }
-              this._current = current;
-          }
-          var literalString = trimLeft(stream.slice(start, this._current));
-          literalString = literalString.replace("\\`", "`");
-          if (this._looksLikeJSON(literalString)) {
-              literal = JSON.parse(literalString);
-          } else {
-              // Try to JSON parse it as "<literal>"
-              literal = JSON.parse("\"" + literalString + "\"");
-          }
-          // +1 gets us to the ending "`", +1 to move on to the next char.
-          this._current++;
-          return literal;
-      },
-
-      _looksLikeJSON: function(literalString) {
-          var startingChars = "[{\"";
-          var jsonLiterals = ["true", "false", "null"];
-          var numberLooking = "-0123456789";
-
-          if (literalString === "") {
-              return false;
-          } else if (startingChars.indexOf(literalString[0]) >= 0) {
-              return true;
-          } else if (jsonLiterals.indexOf(literalString) >= 0) {
-              return true;
-          } else if (numberLooking.indexOf(literalString[0]) >= 0) {
-              try {
-                  JSON.parse(literalString);
-                  return true;
-              } catch (ex) {
-                  return false;
-              }
-          } else {
-              return false;
-          }
-      }
-  };
-
-      var bindingPower = {};
-      bindingPower[TOK_EOF] = 0;
-      bindingPower[TOK_UNQUOTEDIDENTIFIER] = 0;
-      bindingPower[TOK_QUOTEDIDENTIFIER] = 0;
-      bindingPower[TOK_RBRACKET] = 0;
-      bindingPower[TOK_RPAREN] = 0;
-      bindingPower[TOK_COMMA] = 0;
-      bindingPower[TOK_RBRACE] = 0;
-      bindingPower[TOK_NUMBER] = 0;
-      bindingPower[TOK_CURRENT] = 0;
-      bindingPower[TOK_EXPREF] = 0;
-      bindingPower[TOK_PIPE] = 1;
-      bindingPower[TOK_OR] = 2;
-      bindingPower[TOK_AND] = 3;
-      bindingPower[TOK_EQ] = 5;
-      bindingPower[TOK_GT] = 5;
-      bindingPower[TOK_LT] = 5;
-      bindingPower[TOK_GTE] = 5;
-      bindingPower[TOK_LTE] = 5;
-      bindingPower[TOK_NE] = 5;
-      bindingPower[TOK_FLATTEN] = 9;
-      bindingPower[TOK_STAR] = 20;
-      bindingPower[TOK_FILTER] = 21;
-      bindingPower[TOK_DOT] = 40;
-      bindingPower[TOK_NOT] = 45;
-      bindingPower[TOK_LBRACE] = 50;
-      bindingPower[TOK_LBRACKET] = 55;
-      bindingPower[TOK_LPAREN] = 60;
-
-  function Parser() {
-  }
-
-  Parser.prototype = {
-      parse: function(expression) {
-          this._loadTokens(expression);
-          this.index = 0;
-          var ast = this.expression(0);
-          if (this._lookahead(0) !== TOK_EOF) {
-              var t = this._lookaheadToken(0);
-              var error = new Error(
-                  "Unexpected token type: " + t.type + ", value: " + t.value);
-              error.name = "ParserError";
-              throw error;
-          }
-          return ast;
-      },
-
-      _loadTokens: function(expression) {
-          var lexer = new Lexer();
-          var tokens = lexer.tokenize(expression);
-          tokens.push({type: TOK_EOF, value: "", start: expression.length});
-          this.tokens = tokens;
-      },
-
-      expression: function(rbp) {
-          var leftToken = this._lookaheadToken(0);
-          this._advance();
-          var left = this.nud(leftToken);
-          var currentToken = this._lookahead(0);
-          while (rbp < bindingPower[currentToken]) {
-              this._advance();
-              left = this.led(currentToken, left);
-              currentToken = this._lookahead(0);
-          }
-          return left;
-      },
-
-      _lookahead: function(number) {
-          return this.tokens[this.index + number].type;
-      },
-
-      _lookaheadToken: function(number) {
-          return this.tokens[this.index + number];
-      },
-
-      _advance: function() {
-          this.index++;
-      },
-
-      nud: function(token) {
-        var left;
-        var right;
-        var expression;
-        switch (token.type) {
-          case TOK_LITERAL:
-            return {type: "Literal", value: token.value};
-          case TOK_UNQUOTEDIDENTIFIER:
-            return {type: "Field", name: token.value};
-          case TOK_QUOTEDIDENTIFIER:
-            var node = {type: "Field", name: token.value};
-            if (this._lookahead(0) === TOK_LPAREN) {
-                throw new Error("Quoted identifier not allowed for function names.");
-            }
-            return node;
-          case TOK_NOT:
-            right = this.expression(bindingPower.Not);
-            return {type: "NotExpression", children: [right]};
-          case TOK_STAR:
-            left = {type: "Identity"};
-            right = null;
-            if (this._lookahead(0) === TOK_RBRACKET) {
-                // This can happen in a multiselect,
-                // [a, b, *]
-                right = {type: "Identity"};
-            } else {
-                right = this._parseProjectionRHS(bindingPower.Star);
-            }
-            return {type: "ValueProjection", children: [left, right]};
-          case TOK_FILTER:
-            return this.led(token.type, {type: "Identity"});
-          case TOK_LBRACE:
-            return this._parseMultiselectHash();
-          case TOK_FLATTEN:
-            left = {type: TOK_FLATTEN, children: [{type: "Identity"}]};
-            right = this._parseProjectionRHS(bindingPower.Flatten);
-            return {type: "Projection", children: [left, right]};
-          case TOK_LBRACKET:
-            if (this._lookahead(0) === TOK_NUMBER || this._lookahead(0) === TOK_COLON) {
-                right = this._parseIndexExpression();
-                return this._projectIfSlice({type: "Identity"}, right);
-            } else if (this._lookahead(0) === TOK_STAR &&
-                       this._lookahead(1) === TOK_RBRACKET) {
-                this._advance();
-                this._advance();
-                right = this._parseProjectionRHS(bindingPower.Star);
-                return {type: "Projection",
-                        children: [{type: "Identity"}, right]};
-            }
-            return this._parseMultiselectList();
-          case TOK_CURRENT:
-            return {type: TOK_CURRENT};
-          case TOK_EXPREF:
-            expression = this.expression(bindingPower.Expref);
-            return {type: "ExpressionReference", children: [expression]};
-          case TOK_LPAREN:
-            var args = [];
-            while (this._lookahead(0) !== TOK_RPAREN) {
-              if (this._lookahead(0) === TOK_CURRENT) {
-                expression = {type: TOK_CURRENT};
-                this._advance();
-              } else {
-                expression = this.expression(0);
-              }
-              args.push(expression);
-            }
-            this._match(TOK_RPAREN);
-            return args[0];
-          default:
-            this._errorToken(token);
-        }
-      },
-
-      led: function(tokenName, left) {
-        var right;
-        switch(tokenName) {
-          case TOK_DOT:
-            var rbp = bindingPower.Dot;
-            if (this._lookahead(0) !== TOK_STAR) {
-                right = this._parseDotRHS(rbp);
-                return {type: "Subexpression", children: [left, right]};
-            }
-            // Creating a projection.
-            this._advance();
-            right = this._parseProjectionRHS(rbp);
-            return {type: "ValueProjection", children: [left, right]};
-          case TOK_PIPE:
-            right = this.expression(bindingPower.Pipe);
-            return {type: TOK_PIPE, children: [left, right]};
-          case TOK_OR:
-            right = this.expression(bindingPower.Or);
-            return {type: "OrExpression", children: [left, right]};
-          case TOK_AND:
-            right = this.expression(bindingPower.And);
-            return {type: "AndExpression", children: [left, right]};
-          case TOK_LPAREN:
-            var name = left.name;
-            var args = [];
-            var expression, node;
-            while (this._lookahead(0) !== TOK_RPAREN) {
-              if (this._lookahead(0) === TOK_CURRENT) {
-                expression = {type: TOK_CURRENT};
-                this._advance();
-              } else {
-                expression = this.expression(0);
-              }
-              if (this._lookahead(0) === TOK_COMMA) {
-                this._match(TOK_COMMA);
-              }
-              args.push(expression);
-            }
-            this._match(TOK_RPAREN);
-            node = {type: "Function", name: name, children: args};
-            return node;
-          case TOK_FILTER:
-            var condition = this.expression(0);
-            this._match(TOK_RBRACKET);
-            if (this._lookahead(0) === TOK_FLATTEN) {
-              right = {type: "Identity"};
-            } else {
-              right = this._parseProjectionRHS(bindingPower.Filter);
-            }
-            return {type: "FilterProjection", children: [left, right, condition]};
-          case TOK_FLATTEN:
-            var leftNode = {type: TOK_FLATTEN, children: [left]};
-            var rightNode = this._parseProjectionRHS(bindingPower.Flatten);
-            return {type: "Projection", children: [leftNode, rightNode]};
-          case TOK_EQ:
-          case TOK_NE:
-          case TOK_GT:
-          case TOK_GTE:
-          case TOK_LT:
-          case TOK_LTE:
-            return this._parseComparator(left, tokenName);
-          case TOK_LBRACKET:
-            var token = this._lookaheadToken(0);
-            if (token.type === TOK_NUMBER || token.type === TOK_COLON) {
-                right = this._parseIndexExpression();
-                return this._projectIfSlice(left, right);
-            }
-            this._match(TOK_STAR);
-            this._match(TOK_RBRACKET);
-            right = this._parseProjectionRHS(bindingPower.Star);
-            return {type: "Projection", children: [left, right]};
-          default:
-            this._errorToken(this._lookaheadToken(0));
-        }
-      },
-
-      _match: function(tokenType) {
-          if (this._lookahead(0) === tokenType) {
-              this._advance();
-          } else {
-              var t = this._lookaheadToken(0);
-              var error = new Error("Expected " + tokenType + ", got: " + t.type);
-              error.name = "ParserError";
-              throw error;
-          }
-      },
-
-      _errorToken: function(token) {
-          var error = new Error("Invalid token (" +
-                                token.type + "): \"" +
-                                token.value + "\"");
-          error.name = "ParserError";
-          throw error;
-      },
-
-
-      _parseIndexExpression: function() {
-          if (this._lookahead(0) === TOK_COLON || this._lookahead(1) === TOK_COLON) {
-              return this._parseSliceExpression();
-          } else {
-              var node = {
-                  type: "Index",
-                  value: this._lookaheadToken(0).value};
-              this._advance();
-              this._match(TOK_RBRACKET);
-              return node;
-          }
-      },
-
-      _projectIfSlice: function(left, right) {
-          var indexExpr = {type: "IndexExpression", children: [left, right]};
-          if (right.type === "Slice") {
-              return {
-                  type: "Projection",
-                  children: [indexExpr, this._parseProjectionRHS(bindingPower.Star)]
-              };
-          } else {
-              return indexExpr;
-          }
-      },
-
-      _parseSliceExpression: function() {
-          // [start:end:step] where each part is optional, as well as the last
-          // colon.
-          var parts = [null, null, null];
-          var index = 0;
-          var currentToken = this._lookahead(0);
-          while (currentToken !== TOK_RBRACKET && index < 3) {
-              if (currentToken === TOK_COLON) {
-                  index++;
-                  this._advance();
-              } else if (currentToken === TOK_NUMBER) {
-                  parts[index] = this._lookaheadToken(0).value;
-                  this._advance();
-              } else {
-                  var t = this._lookahead(0);
-                  var error = new Error("Syntax error, unexpected token: " +
-                                        t.value + "(" + t.type + ")");
-                  error.name = "Parsererror";
-                  throw error;
-              }
-              currentToken = this._lookahead(0);
-          }
-          this._match(TOK_RBRACKET);
-          return {
-              type: "Slice",
-              children: parts
-          };
-      },
-
-      _parseComparator: function(left, comparator) {
-        var right = this.expression(bindingPower[comparator]);
-        return {type: "Comparator", name: comparator, children: [left, right]};
-      },
-
-      _parseDotRHS: function(rbp) {
-          var lookahead = this._lookahead(0);
-          var exprTokens = [TOK_UNQUOTEDIDENTIFIER, TOK_QUOTEDIDENTIFIER, TOK_STAR];
-          if (exprTokens.indexOf(lookahead) >= 0) {
-              return this.expression(rbp);
-          } else if (lookahead === TOK_LBRACKET) {
-              this._match(TOK_LBRACKET);
-              return this._parseMultiselectList();
-          } else if (lookahead === TOK_LBRACE) {
-              this._match(TOK_LBRACE);
-              return this._parseMultiselectHash();
-          }
-      },
-
-      _parseProjectionRHS: function(rbp) {
-          var right;
-          if (bindingPower[this._lookahead(0)] < 10) {
-              right = {type: "Identity"};
-          } else if (this._lookahead(0) === TOK_LBRACKET) {
-              right = this.expression(rbp);
-          } else if (this._lookahead(0) === TOK_FILTER) {
-              right = this.expression(rbp);
-          } else if (this._lookahead(0) === TOK_DOT) {
-              this._match(TOK_DOT);
-              right = this._parseDotRHS(rbp);
-          } else {
-              var t = this._lookaheadToken(0);
-              var error = new Error("Sytanx error, unexpected token: " +
-                                    t.value + "(" + t.type + ")");
-              error.name = "ParserError";
-              throw error;
-          }
-          return right;
-      },
-
-      _parseMultiselectList: function() {
-          var expressions = [];
-          while (this._lookahead(0) !== TOK_RBRACKET) {
-              var expression = this.expression(0);
-              expressions.push(expression);
-              if (this._lookahead(0) === TOK_COMMA) {
-                  this._match(TOK_COMMA);
-                  if (this._lookahead(0) === TOK_RBRACKET) {
-                    throw new Error("Unexpected token Rbracket");
-                  }
-              }
-          }
-          this._match(TOK_RBRACKET);
-          return {type: "MultiSelectList", children: expressions};
-      },
-
-      _parseMultiselectHash: function() {
-        var pairs = [];
-        var identifierTypes = [TOK_UNQUOTEDIDENTIFIER, TOK_QUOTEDIDENTIFIER];
-        var keyToken, keyName, value, node;
-        for (;;) {
-          keyToken = this._lookaheadToken(0);
-          if (identifierTypes.indexOf(keyToken.type) < 0) {
-            throw new Error("Expecting an identifier token, got: " +
-                            keyToken.type);
-          }
-          keyName = keyToken.value;
-          this._advance();
-          this._match(TOK_COLON);
-          value = this.expression(0);
-          node = {type: "KeyValuePair", name: keyName, value: value};
-          pairs.push(node);
-          if (this._lookahead(0) === TOK_COMMA) {
-            this._match(TOK_COMMA);
-          } else if (this._lookahead(0) === TOK_RBRACE) {
-            this._match(TOK_RBRACE);
-            break;
-          }
-        }
-        return {type: "MultiSelectHash", children: pairs};
-      }
-  };
-
-
-  function TreeInterpreter(runtime) {
-    this.runtime = runtime;
-  }
-
-  TreeInterpreter.prototype = {
-      search: function(node, value) {
-          return this.visit(node, value);
-      },
-
-      visit: function(node, value) {
-          var matched, current, result, first, second, field, left, right, collected, i;
-          switch (node.type) {
-            case "Field":
-              if (value !== null && isObject(value)) {
-                  field = value[node.name];
-                  if (field === undefined) {
-                      return null;
-                  } else {
-                      return field;
-                  }
-              }
-              return null;
-            case "Subexpression":
-              result = this.visit(node.children[0], value);
-              for (i = 1; i < node.children.length; i++) {
-                  result = this.visit(node.children[1], result);
-                  if (result === null) {
-                      return null;
-                  }
-              }
-              return result;
-            case "IndexExpression":
-              left = this.visit(node.children[0], value);
-              right = this.visit(node.children[1], left);
-              return right;
-            case "Index":
-              if (!isArray(value)) {
-                return null;
-              }
-              var index = node.value;
-              if (index < 0) {
-                index = value.length + index;
-              }
-              result = value[index];
-              if (result === undefined) {
-                result = null;
-              }
-              return result;
-            case "Slice":
-              if (!isArray(value)) {
-                return null;
-              }
-              var sliceParams = node.children.slice(0);
-              var computed = this.computeSliceParams(value.length, sliceParams);
-              var start = computed[0];
-              var stop = computed[1];
-              var step = computed[2];
-              result = [];
-              if (step > 0) {
-                  for (i = start; i < stop; i += step) {
-                      result.push(value[i]);
-                  }
-              } else {
-                  for (i = start; i > stop; i += step) {
-                      result.push(value[i]);
-                  }
-              }
-              return result;
-            case "Projection":
-              // Evaluate left child.
-              var base = this.visit(node.children[0], value);
-              if (!isArray(base)) {
-                return null;
-              }
-              collected = [];
-              for (i = 0; i < base.length; i++) {
-                current = this.visit(node.children[1], base[i]);
-                if (current !== null) {
-                  collected.push(current);
-                }
-              }
-              return collected;
-            case "ValueProjection":
-              // Evaluate left child.
-              base = this.visit(node.children[0], value);
-              if (!isObject(base)) {
-                return null;
-              }
-              collected = [];
-              var values = objValues(base);
-              for (i = 0; i < values.length; i++) {
-                current = this.visit(node.children[1], values[i]);
-                if (current !== null) {
-                  collected.push(current);
-                }
-              }
-              return collected;
-            case "FilterProjection":
-              base = this.visit(node.children[0], value);
-              if (!isArray(base)) {
-                return null;
-              }
-              var filtered = [];
-              var finalResults = [];
-              for (i = 0; i < base.length; i++) {
-                matched = this.visit(node.children[2], base[i]);
-                if (!isFalse(matched)) {
-                  filtered.push(base[i]);
-                }
-              }
-              for (var j = 0; j < filtered.length; j++) {
-                current = this.visit(node.children[1], filtered[j]);
-                if (current !== null) {
-                  finalResults.push(current);
-                }
-              }
-              return finalResults;
-            case "Comparator":
-              first = this.visit(node.children[0], value);
-              second = this.visit(node.children[1], value);
-              switch(node.name) {
-                case TOK_EQ:
-                  result = strictDeepEqual(first, second);
-                  break;
-                case TOK_NE:
-                  result = !strictDeepEqual(first, second);
-                  break;
-                case TOK_GT:
-                  result = first > second;
-                  break;
-                case TOK_GTE:
-                  result = first >= second;
-                  break;
-                case TOK_LT:
-                  result = first < second;
-                  break;
-                case TOK_LTE:
-                  result = first <= second;
-                  break;
-                default:
-                  throw new Error("Unknown comparator: " + node.name);
-              }
-              return result;
-            case TOK_FLATTEN:
-              var original = this.visit(node.children[0], value);
-              if (!isArray(original)) {
-                return null;
-              }
-              var merged = [];
-              for (i = 0; i < original.length; i++) {
-                current = original[i];
-                if (isArray(current)) {
-                  merged.push.apply(merged, current);
-                } else {
-                  merged.push(current);
-                }
-              }
-              return merged;
-            case "Identity":
-              return value;
-            case "MultiSelectList":
-              if (value === null) {
-                return null;
-              }
-              collected = [];
-              for (i = 0; i < node.children.length; i++) {
-                  collected.push(this.visit(node.children[i], value));
-              }
-              return collected;
-            case "MultiSelectHash":
-              if (value === null) {
-                return null;
-              }
-              collected = {};
-              var child;
-              for (i = 0; i < node.children.length; i++) {
-                child = node.children[i];
-                collected[child.name] = this.visit(child.value, value);
-              }
-              return collected;
-            case "OrExpression":
-              matched = this.visit(node.children[0], value);
-              if (isFalse(matched)) {
-                  matched = this.visit(node.children[1], value);
-              }
-              return matched;
-            case "AndExpression":
-              first = this.visit(node.children[0], value);
-
-              if (isFalse(first) === true) {
-                return first;
-              }
-              return this.visit(node.children[1], value);
-            case "NotExpression":
-              first = this.visit(node.children[0], value);
-              return isFalse(first);
-            case "Literal":
-              return node.value;
-            case TOK_PIPE:
-              left = this.visit(node.children[0], value);
-              return this.visit(node.children[1], left);
-            case TOK_CURRENT:
-              return value;
-            case "Function":
-              var resolvedArgs = [];
-              for (i = 0; i < node.children.length; i++) {
-                  resolvedArgs.push(this.visit(node.children[i], value));
-              }
-              return this.runtime.callFunction(node.name, resolvedArgs);
-            case "ExpressionReference":
-              var refNode = node.children[0];
-              // Tag the node with a specific attribute so the type
-              // checker verify the type.
-              refNode.jmespathType = TOK_EXPREF;
-              return refNode;
-            default:
-              throw new Error("Unknown node type: " + node.type);
-          }
-      },
-
-      computeSliceParams: function(arrayLength, sliceParams) {
-        var start = sliceParams[0];
-        var stop = sliceParams[1];
-        var step = sliceParams[2];
-        var computed = [null, null, null];
-        if (step === null) {
-          step = 1;
-        } else if (step === 0) {
-          var error = new Error("Invalid slice, step cannot be 0");
-          error.name = "RuntimeError";
-          throw error;
-        }
-        var stepValueNegative = step < 0 ? true : false;
-
-        if (start === null) {
-            start = stepValueNegative ? arrayLength - 1 : 0;
-        } else {
-            start = this.capSliceRange(arrayLength, start, step);
-        }
-
-        if (stop === null) {
-            stop = stepValueNegative ? -1 : arrayLength;
-        } else {
-            stop = this.capSliceRange(arrayLength, stop, step);
-        }
-        computed[0] = start;
-        computed[1] = stop;
-        computed[2] = step;
-        return computed;
-      },
-
-      capSliceRange: function(arrayLength, actualValue, step) {
-          if (actualValue < 0) {
-              actualValue += arrayLength;
-              if (actualValue < 0) {
-                  actualValue = step < 0 ? -1 : 0;
-              }
-          } else if (actualValue >= arrayLength) {
-              actualValue = step < 0 ? arrayLength - 1 : arrayLength;
-          }
-          return actualValue;
-      }
-
-  };
-
-  function Runtime(interpreter) {
-    this._interpreter = interpreter;
-    this.functionTable = {
-        // name: [function, <signature>]
-        // The <signature> can be:
-        //
-        // {
-        //   args: [[type1, type2], [type1, type2]],
-        //   variadic: true|false
-        // }
-        //
-        // Each arg in the arg list is a list of valid types
-        // (if the function is overloaded and supports multiple
-        // types.  If the type is "any" then no type checking
-        // occurs on the argument.  Variadic is optional
-        // and if not provided is assumed to be false.
-        abs: {_func: this._functionAbs, _signature: [{types: [TYPE_NUMBER]}]},
-        avg: {_func: this._functionAvg, _signature: [{types: [TYPE_ARRAY_NUMBER]}]},
-        ceil: {_func: this._functionCeil, _signature: [{types: [TYPE_NUMBER]}]},
-        contains: {
-            _func: this._functionContains,
-            _signature: [{types: [TYPE_STRING, TYPE_ARRAY]},
-                        {types: [TYPE_ANY]}]},
-        "ends_with": {
-            _func: this._functionEndsWith,
-            _signature: [{types: [TYPE_STRING]}, {types: [TYPE_STRING]}]},
-        floor: {_func: this._functionFloor, _signature: [{types: [TYPE_NUMBER]}]},
-        length: {
-            _func: this._functionLength,
-            _signature: [{types: [TYPE_STRING, TYPE_ARRAY, TYPE_OBJECT]}]},
-        map: {
-            _func: this._functionMap,
-            _signature: [{types: [TYPE_EXPREF]}, {types: [TYPE_ARRAY]}]},
-        max: {
-            _func: this._functionMax,
-            _signature: [{types: [TYPE_ARRAY_NUMBER, TYPE_ARRAY_STRING]}]},
-        "merge": {
-            _func: this._functionMerge,
-            _signature: [{types: [TYPE_OBJECT], variadic: true}]
-        },
-        "max_by": {
-          _func: this._functionMaxBy,
-          _signature: [{types: [TYPE_ARRAY]}, {types: [TYPE_EXPREF]}]
-        },
-        sum: {_func: this._functionSum, _signature: [{types: [TYPE_ARRAY_NUMBER]}]},
-        "starts_with": {
-            _func: this._functionStartsWith,
-            _signature: [{types: [TYPE_STRING]}, {types: [TYPE_STRING]}]},
-        min: {
-            _func: this._functionMin,
-            _signature: [{types: [TYPE_ARRAY_NUMBER, TYPE_ARRAY_STRING]}]},
-        "min_by": {
-          _func: this._functionMinBy,
-          _signature: [{types: [TYPE_ARRAY]}, {types: [TYPE_EXPREF]}]
-        },
-        type: {_func: this._functionType, _signature: [{types: [TYPE_ANY]}]},
-        keys: {_func: this._functionKeys, _signature: [{types: [TYPE_OBJECT]}]},
-        values: {_func: this._functionValues, _signature: [{types: [TYPE_OBJECT]}]},
-        sort: {_func: this._functionSort, _signature: [{types: [TYPE_ARRAY_STRING, TYPE_ARRAY_NUMBER]}]},
-        "sort_by": {
-          _func: this._functionSortBy,
-          _signature: [{types: [TYPE_ARRAY]}, {types: [TYPE_EXPREF]}]
-        },
-        join: {
-            _func: this._functionJoin,
-            _signature: [
-                {types: [TYPE_STRING]},
-                {types: [TYPE_ARRAY_STRING]}
-            ]
-        },
-        reverse: {
-            _func: this._functionReverse,
-            _signature: [{types: [TYPE_STRING, TYPE_ARRAY]}]},
-        "to_array": {_func: this._functionToArray, _signature: [{types: [TYPE_ANY]}]},
-        "to_string": {_func: this._functionToString, _signature: [{types: [TYPE_ANY]}]},
-        "to_number": {_func: this._functionToNumber, _signature: [{types: [TYPE_ANY]}]},
-        "not_null": {
-            _func: this._functionNotNull,
-            _signature: [{types: [TYPE_ANY], variadic: true}]
-        }
-    };
-  }
-
-  Runtime.prototype = {
-    callFunction: function(name, resolvedArgs) {
-      var functionEntry = this.functionTable[name];
-      if (functionEntry === undefined) {
-          throw new Error("Unknown function: " + name + "()");
-      }
-      this._validateArgs(name, resolvedArgs, functionEntry._signature);
-      return functionEntry._func.call(this, resolvedArgs);
-    },
-
-    _validateArgs: function(name, args, signature) {
-        // Validating the args requires validating
-        // the correct arity and the correct type of each arg.
-        // If the last argument is declared as variadic, then we need
-        // a minimum number of args to be required.  Otherwise it has to
-        // be an exact amount.
-        var pluralized;
-        if (signature[signature.length - 1].variadic) {
-            if (args.length < signature.length) {
-                pluralized = signature.length === 1 ? " argument" : " arguments";
-                throw new Error("ArgumentError: " + name + "() " +
-                                "takes at least" + signature.length + pluralized +
-                                " but received " + args.length);
-            }
-        } else if (args.length !== signature.length) {
-            pluralized = signature.length === 1 ? " argument" : " arguments";
-            throw new Error("ArgumentError: " + name + "() " +
-                            "takes " + signature.length + pluralized +
-                            " but received " + args.length);
-        }
-        var currentSpec;
-        var actualType;
-        var typeMatched;
-        for (var i = 0; i < signature.length; i++) {
-            typeMatched = false;
-            currentSpec = signature[i].types;
-            actualType = this._getTypeName(args[i]);
-            for (var j = 0; j < currentSpec.length; j++) {
-                if (this._typeMatches(actualType, currentSpec[j], args[i])) {
-                    typeMatched = true;
-                    break;
-                }
-            }
-            if (!typeMatched) {
-                var expected = currentSpec
-                    .map(function(typeIdentifier) {
-                        return TYPE_NAME_TABLE[typeIdentifier];
-                    })
-                    .join(',');
-                throw new Error("TypeError: " + name + "() " +
-                                "expected argument " + (i + 1) +
-                                " to be type " + expected +
-                                " but received type " +
-                                TYPE_NAME_TABLE[actualType] + " instead.");
-            }
-        }
-    },
-
-    _typeMatches: function(actual, expected, argValue) {
-        if (expected === TYPE_ANY) {
-            return true;
-        }
-        if (expected === TYPE_ARRAY_STRING ||
-            expected === TYPE_ARRAY_NUMBER ||
-            expected === TYPE_ARRAY) {
-            // The expected type can either just be array,
-            // or it can require a specific subtype (array of numbers).
-            //
-            // The simplest case is if "array" with no subtype is specified.
-            if (expected === TYPE_ARRAY) {
-                return actual === TYPE_ARRAY;
-            } else if (actual === TYPE_ARRAY) {
-                // Otherwise we need to check subtypes.
-                // I think this has potential to be improved.
-                var subtype;
-                if (expected === TYPE_ARRAY_NUMBER) {
-                  subtype = TYPE_NUMBER;
-                } else if (expected === TYPE_ARRAY_STRING) {
-                  subtype = TYPE_STRING;
-                }
-                for (var i = 0; i < argValue.length; i++) {
-                    if (!this._typeMatches(
-                            this._getTypeName(argValue[i]), subtype,
-                                             argValue[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        } else {
-            return actual === expected;
-        }
-    },
-    _getTypeName: function(obj) {
-        switch (Object.prototype.toString.call(obj)) {
-            case "[object String]":
-              return TYPE_STRING;
-            case "[object Number]":
-              return TYPE_NUMBER;
-            case "[object Array]":
-              return TYPE_ARRAY;
-            case "[object Boolean]":
-              return TYPE_BOOLEAN;
-            case "[object Null]":
-              return TYPE_NULL;
-            case "[object Object]":
-              // Check if it's an expref.  If it has, it's been
-              // tagged with a jmespathType attr of 'Expref';
-              if (obj.jmespathType === TOK_EXPREF) {
-                return TYPE_EXPREF;
-              } else {
-                return TYPE_OBJECT;
-              }
-        }
-    },
-
-    _functionStartsWith: function(resolvedArgs) {
-        return resolvedArgs[0].lastIndexOf(resolvedArgs[1]) === 0;
-    },
-
-    _functionEndsWith: function(resolvedArgs) {
-        var searchStr = resolvedArgs[0];
-        var suffix = resolvedArgs[1];
-        return searchStr.indexOf(suffix, searchStr.length - suffix.length) !== -1;
-    },
-
-    _functionReverse: function(resolvedArgs) {
-        var typeName = this._getTypeName(resolvedArgs[0]);
-        if (typeName === TYPE_STRING) {
-          var originalStr = resolvedArgs[0];
-          var reversedStr = "";
-          for (var i = originalStr.length - 1; i >= 0; i--) {
-              reversedStr += originalStr[i];
-          }
-          return reversedStr;
-        } else {
-          var reversedArray = resolvedArgs[0].slice(0);
-          reversedArray.reverse();
-          return reversedArray;
-        }
-    },
-
-    _functionAbs: function(resolvedArgs) {
-      return Math.abs(resolvedArgs[0]);
-    },
-
-    _functionCeil: function(resolvedArgs) {
-        return Math.ceil(resolvedArgs[0]);
-    },
-
-    _functionAvg: function(resolvedArgs) {
-        var sum = 0;
-        var inputArray = resolvedArgs[0];
-        for (var i = 0; i < inputArray.length; i++) {
-            sum += inputArray[i];
-        }
-        return sum / inputArray.length;
-    },
-
-    _functionContains: function(resolvedArgs) {
-        return resolvedArgs[0].indexOf(resolvedArgs[1]) >= 0;
-    },
-
-    _functionFloor: function(resolvedArgs) {
-        return Math.floor(resolvedArgs[0]);
-    },
-
-    _functionLength: function(resolvedArgs) {
-       if (!isObject(resolvedArgs[0])) {
-         return resolvedArgs[0].length;
-       } else {
-         // As far as I can tell, there's no way to get the length
-         // of an object without O(n) iteration through the object.
-         return Object.keys(resolvedArgs[0]).length;
-       }
-    },
-
-    _functionMap: function(resolvedArgs) {
-      var mapped = [];
-      var interpreter = this._interpreter;
-      var exprefNode = resolvedArgs[0];
-      var elements = resolvedArgs[1];
-      for (var i = 0; i < elements.length; i++) {
-          mapped.push(interpreter.visit(exprefNode, elements[i]));
-      }
-      return mapped;
-    },
-
-    _functionMerge: function(resolvedArgs) {
-      var merged = {};
-      for (var i = 0; i < resolvedArgs.length; i++) {
-        var current = resolvedArgs[i];
-        for (var key in current) {
-          merged[key] = current[key];
-        }
-      }
-      return merged;
-    },
-
-    _functionMax: function(resolvedArgs) {
-      if (resolvedArgs[0].length > 0) {
-        var typeName = this._getTypeName(resolvedArgs[0][0]);
-        if (typeName === TYPE_NUMBER) {
-          return Math.max.apply(Math, resolvedArgs[0]);
-        } else {
-          var elements = resolvedArgs[0];
-          var maxElement = elements[0];
-          for (var i = 1; i < elements.length; i++) {
-              if (maxElement.localeCompare(elements[i]) < 0) {
-                  maxElement = elements[i];
-              }
-          }
-          return maxElement;
-        }
-      } else {
-          return null;
-      }
-    },
-
-    _functionMin: function(resolvedArgs) {
-      if (resolvedArgs[0].length > 0) {
-        var typeName = this._getTypeName(resolvedArgs[0][0]);
-        if (typeName === TYPE_NUMBER) {
-          return Math.min.apply(Math, resolvedArgs[0]);
-        } else {
-          var elements = resolvedArgs[0];
-          var minElement = elements[0];
-          for (var i = 1; i < elements.length; i++) {
-              if (elements[i].localeCompare(minElement) < 0) {
-                  minElement = elements[i];
-              }
-          }
-          return minElement;
-        }
-      } else {
-        return null;
-      }
-    },
-
-    _functionSum: function(resolvedArgs) {
-      var sum = 0;
-      var listToSum = resolvedArgs[0];
-      for (var i = 0; i < listToSum.length; i++) {
-        sum += listToSum[i];
-      }
-      return sum;
-    },
-
-    _functionType: function(resolvedArgs) {
-        switch (this._getTypeName(resolvedArgs[0])) {
-          case TYPE_NUMBER:
-            return "number";
-          case TYPE_STRING:
-            return "string";
-          case TYPE_ARRAY:
-            return "array";
-          case TYPE_OBJECT:
-            return "object";
-          case TYPE_BOOLEAN:
-            return "boolean";
-          case TYPE_EXPREF:
-            return "expref";
-          case TYPE_NULL:
-            return "null";
-        }
-    },
-
-    _functionKeys: function(resolvedArgs) {
-        return Object.keys(resolvedArgs[0]);
-    },
-
-    _functionValues: function(resolvedArgs) {
-        var obj = resolvedArgs[0];
-        var keys = Object.keys(obj);
-        var values = [];
-        for (var i = 0; i < keys.length; i++) {
-            values.push(obj[keys[i]]);
-        }
-        return values;
-    },
-
-    _functionJoin: function(resolvedArgs) {
-        var joinChar = resolvedArgs[0];
-        var listJoin = resolvedArgs[1];
-        return listJoin.join(joinChar);
-    },
-
-    _functionToArray: function(resolvedArgs) {
-        if (this._getTypeName(resolvedArgs[0]) === TYPE_ARRAY) {
-            return resolvedArgs[0];
-        } else {
-            return [resolvedArgs[0]];
-        }
-    },
-
-    _functionToString: function(resolvedArgs) {
-        if (this._getTypeName(resolvedArgs[0]) === TYPE_STRING) {
-            return resolvedArgs[0];
-        } else {
-            return JSON.stringify(resolvedArgs[0]);
-        }
-    },
-
-    _functionToNumber: function(resolvedArgs) {
-        var typeName = this._getTypeName(resolvedArgs[0]);
-        var convertedValue;
-        if (typeName === TYPE_NUMBER) {
-            return resolvedArgs[0];
-        } else if (typeName === TYPE_STRING) {
-            convertedValue = +resolvedArgs[0];
-            if (!isNaN(convertedValue)) {
-                return convertedValue;
-            }
-        }
-        return null;
-    },
-
-    _functionNotNull: function(resolvedArgs) {
-        for (var i = 0; i < resolvedArgs.length; i++) {
-            if (this._getTypeName(resolvedArgs[i]) !== TYPE_NULL) {
-                return resolvedArgs[i];
-            }
-        }
-        return null;
-    },
-
-    _functionSort: function(resolvedArgs) {
-        var sortedArray = resolvedArgs[0].slice(0);
-        sortedArray.sort();
-        return sortedArray;
-    },
-
-    _functionSortBy: function(resolvedArgs) {
-        var sortedArray = resolvedArgs[0].slice(0);
-        if (sortedArray.length === 0) {
-            return sortedArray;
-        }
-        var interpreter = this._interpreter;
-        var exprefNode = resolvedArgs[1];
-        var requiredType = this._getTypeName(
-            interpreter.visit(exprefNode, sortedArray[0]));
-        if ([TYPE_NUMBER, TYPE_STRING].indexOf(requiredType) < 0) {
-            throw new Error("TypeError");
-        }
-        var that = this;
-        // In order to get a stable sort out of an unstable
-        // sort algorithm, we decorate/sort/undecorate (DSU)
-        // by creating a new list of [index, element] pairs.
-        // In the cmp function, if the evaluated elements are
-        // equal, then the index will be used as the tiebreaker.
-        // After the decorated list has been sorted, it will be
-        // undecorated to extract the original elements.
-        var decorated = [];
-        for (var i = 0; i < sortedArray.length; i++) {
-          decorated.push([i, sortedArray[i]]);
-        }
-        decorated.sort(function(a, b) {
-          var exprA = interpreter.visit(exprefNode, a[1]);
-          var exprB = interpreter.visit(exprefNode, b[1]);
-          if (that._getTypeName(exprA) !== requiredType) {
-              throw new Error(
-                  "TypeError: expected " + requiredType + ", received " +
-                  that._getTypeName(exprA));
-          } else if (that._getTypeName(exprB) !== requiredType) {
-              throw new Error(
-                  "TypeError: expected " + requiredType + ", received " +
-                  that._getTypeName(exprB));
-          }
-          if (exprA > exprB) {
-            return 1;
-          } else if (exprA < exprB) {
-            return -1;
-          } else {
-            // If they're equal compare the items by their
-            // order to maintain relative order of equal keys
-            // (i.e. to get a stable sort).
-            return a[0] - b[0];
-          }
-        });
-        // Undecorate: extract out the original list elements.
-        for (var j = 0; j < decorated.length; j++) {
-          sortedArray[j] = decorated[j][1];
-        }
-        return sortedArray;
-    },
-
-    _functionMaxBy: function(resolvedArgs) {
-      var exprefNode = resolvedArgs[1];
-      var resolvedArray = resolvedArgs[0];
-      var keyFunction = this.createKeyFunction(exprefNode, [TYPE_NUMBER, TYPE_STRING]);
-      var maxNumber = -Infinity;
-      var maxRecord;
-      var current;
-      for (var i = 0; i < resolvedArray.length; i++) {
-        current = keyFunction(resolvedArray[i]);
-        if (current > maxNumber) {
-          maxNumber = current;
-          maxRecord = resolvedArray[i];
-        }
-      }
-      return maxRecord;
-    },
-
-    _functionMinBy: function(resolvedArgs) {
-      var exprefNode = resolvedArgs[1];
-      var resolvedArray = resolvedArgs[0];
-      var keyFunction = this.createKeyFunction(exprefNode, [TYPE_NUMBER, TYPE_STRING]);
-      var minNumber = Infinity;
-      var minRecord;
-      var current;
-      for (var i = 0; i < resolvedArray.length; i++) {
-        current = keyFunction(resolvedArray[i]);
-        if (current < minNumber) {
-          minNumber = current;
-          minRecord = resolvedArray[i];
-        }
-      }
-      return minRecord;
-    },
-
-    createKeyFunction: function(exprefNode, allowedTypes) {
-      var that = this;
-      var interpreter = this._interpreter;
-      var keyFunc = function(x) {
-        var current = interpreter.visit(exprefNode, x);
-        if (allowedTypes.indexOf(that._getTypeName(current)) < 0) {
-          var msg = "TypeError: expected one of " + allowedTypes +
-                    ", received " + that._getTypeName(current);
-          throw new Error(msg);
-        }
-        return current;
-      };
-      return keyFunc;
-    }
-
-  };
-
-  function compile(stream) {
-    var parser = new Parser();
-    var ast = parser.parse(stream);
-    return ast;
-  }
-
-  function tokenize(stream) {
-      var lexer = new Lexer();
-      return lexer.tokenize(stream);
-  }
-
-  function search(data, expression) {
-      var parser = new Parser();
-      // This needs to be improved.  Both the interpreter and runtime depend on
-      // each other.  The runtime needs the interpreter to support exprefs.
-      // There's likely a clean way to avoid the cyclic dependency.
-      var runtime = new Runtime();
-      var interpreter = new TreeInterpreter(runtime);
-      runtime._interpreter = interpreter;
-      var node = parser.parse(expression);
-      return interpreter.search(node, data);
-  }
-
-  exports.tokenize = tokenize;
-  exports.compile = compile;
-  exports.search = search;
-  exports.strictDeepEqual = strictDeepEqual;
-})(typeof exports === "undefined" ? this.jmespath = {} : exports);
+ (function (global, factory) {
+   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+   typeof define === 'function' && define.amd ? define(['exports'], factory) :
+   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.jmespath = {}));
+ })(this, (function (exports) { 'use strict';
+
+   var Token;
+   (function (Token) {
+	   Token["TOK_EOF"] = "EOF";
+	   Token["TOK_UNQUOTEDIDENTIFIER"] = "UnquotedIdentifier";
+	   Token["TOK_QUOTEDIDENTIFIER"] = "QuotedIdentifier";
+	   Token["TOK_RBRACKET"] = "Rbracket";
+	   Token["TOK_RPAREN"] = "Rparen";
+	   Token["TOK_COMMA"] = "Comma";
+	   Token["TOK_COLON"] = "Colon";
+	   Token["TOK_RBRACE"] = "Rbrace";
+	   Token["TOK_NUMBER"] = "Number";
+	   Token["TOK_CURRENT"] = "Current";
+	   Token["TOK_ROOT"] = "Root";
+	   Token["TOK_EXPREF"] = "Expref";
+	   Token["TOK_PIPE"] = "Pipe";
+	   Token["TOK_OR"] = "Or";
+	   Token["TOK_AND"] = "And";
+	   Token["TOK_EQ"] = "EQ";
+	   Token["TOK_GT"] = "GT";
+	   Token["TOK_LT"] = "LT";
+	   Token["TOK_GTE"] = "GTE";
+	   Token["TOK_LTE"] = "LTE";
+	   Token["TOK_NE"] = "NE";
+	   Token["TOK_PLUS"] = "Plus";
+	   Token["TOK_MINUS"] = "Minus";
+	   Token["TOK_MULTIPLY"] = "Multiply";
+	   Token["TOK_DIVIDE"] = "Divide";
+	   Token["TOK_MODULO"] = "Modulo";
+	   Token["TOK_DIV"] = "Div";
+	   Token["TOK_FLATTEN"] = "Flatten";
+	   Token["TOK_STAR"] = "Star";
+	   Token["TOK_FILTER"] = "Filter";
+	   Token["TOK_DOT"] = "Dot";
+	   Token["TOK_NOT"] = "Not";
+	   Token["TOK_LBRACE"] = "Lbrace";
+	   Token["TOK_LBRACKET"] = "Lbracket";
+	   Token["TOK_LPAREN"] = "Lparen";
+	   Token["TOK_LITERAL"] = "Literal";
+   })(Token || (Token = {}));
+
+   const isObject = (obj) => {
+	   return obj !== null && Object.prototype.toString.call(obj) === '[object Object]';
+   };
+   const strictDeepEqual = (first, second) => {
+	   if (first === second) {
+		   return true;
+	   }
+	   if (typeof first !== typeof second) {
+		   return false;
+	   }
+	   if (Array.isArray(first) && Array.isArray(second)) {
+		   if (first.length !== second.length) {
+			   return false;
+		   }
+		   for (let i = 0; i < first.length; i += 1) {
+			   if (!strictDeepEqual(first[i], second[i])) {
+				   return false;
+			   }
+		   }
+		   return true;
+	   }
+	   if (isObject(first) && isObject(second)) {
+		   const firstEntries = Object.entries(first);
+		   const secondKeys = new Set(Object.keys(second));
+		   if (firstEntries.length !== secondKeys.size) {
+			   return false;
+		   }
+		   for (const [key, value] of firstEntries) {
+			   if (!strictDeepEqual(value, second[key])) {
+				   return false;
+			   }
+			   secondKeys.delete(key);
+		   }
+		   return secondKeys.size === 0;
+	   }
+	   return false;
+   };
+   const isFalse = (obj) => {
+	   if (typeof obj === 'object') {
+		   if (obj === null) {
+			   return true;
+		   }
+		   if (Array.isArray(obj)) {
+			   return obj.length === 0;
+		   }
+		   // eslint-disable-next-line @typescript-eslint/naming-convention
+		   for (const _key in obj) {
+			   return false;
+		   }
+		   return true;
+	   }
+	   return !(typeof obj === 'number' || obj);
+   };
+   const isAlpha = (ch) => {
+	   // tslint:disable-next-line: strict-comparisons
+	   return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_';
+   };
+   const isNum = (ch) => {
+	   // tslint:disable-next-line: strict-comparisons
+	   return (ch >= '0' && ch <= '9') || ch === '-';
+   };
+   const isAlphaNum = (ch) => {
+	   // tslint:disable-next-line: strict-comparisons
+	   return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || ch === '_';
+   };
+   const ensureInteger = (value) => {
+	   if (!(typeof value === 'number') || Math.floor(value) !== value) {
+		   throw new Error('invalid-value: expecting an integer.');
+	   }
+	   return value;
+   };
+   const ensurePositiveInteger = (value) => {
+	   if (!(typeof value === 'number') || value < 0 || Math.floor(value) !== value) {
+		   throw new Error('invalid-value: expecting a non-negative integer.');
+	   }
+	   return value;
+   };
+   const ensureNumbers = (...operands) => {
+	   for (let i = 0; i < operands.length; i++) {
+		   if (operands[i] === null || operands[i] === undefined) {
+			   throw new Error('not-a-number: undefined');
+		   }
+		   if (typeof operands[i] !== 'number') {
+			   throw new Error('not-a-number');
+		   }
+	   }
+   };
+   const notZero = (n) => {
+	   n = +n; // coerce to number
+	   if (!n) {
+		   // matches -0, +0, NaN
+		   throw new Error('not-a-number: divide by zero');
+	   }
+	   return n;
+   };
+   const add = (left, right) => {
+	   ensureNumbers(left, right);
+	   const result = left + right;
+	   return result;
+   };
+   const sub = (left, right) => {
+	   ensureNumbers(left, right);
+	   const result = left - right;
+	   return result;
+   };
+   const mul = (left, right) => {
+	   ensureNumbers(left, right);
+	   const result = left * right;
+	   return result;
+   };
+   const divide = (left, right) => {
+	   ensureNumbers(left, right);
+	   const result = left / notZero(right);
+	   return result;
+   };
+   const div = (left, right) => {
+	   ensureNumbers(left, right);
+	   const result = Math.floor(left / notZero(right));
+	   return result;
+   };
+   const mod = (left, right) => {
+	   ensureNumbers(left, right);
+	   const result = left % right;
+	   return result;
+   };
+
+   const basicTokens = {
+	   '(': Token.TOK_LPAREN,
+	   ')': Token.TOK_RPAREN,
+	   '*': Token.TOK_STAR,
+	   ',': Token.TOK_COMMA,
+	   '.': Token.TOK_DOT,
+	   ':': Token.TOK_COLON,
+	   '@': Token.TOK_CURRENT,
+	   ['$']: Token.TOK_ROOT,
+	   ']': Token.TOK_RBRACKET,
+	   '{': Token.TOK_LBRACE,
+	   '}': Token.TOK_RBRACE,
+	   '+': Token.TOK_PLUS,
+	   '%': Token.TOK_MODULO,
+	   '\u2212': Token.TOK_MINUS,
+	   '\u00d7': Token.TOK_MULTIPLY,
+	   '\u00f7': Token.TOK_DIVIDE,
+   };
+   const operatorStartToken = {
+	   '!': true,
+	   '<': true,
+	   '=': true,
+	   '>': true,
+	   '&': true,
+	   '|': true,
+	   '/': true,
+   };
+   const skipChars = {
+	   '\t': true,
+	   '\n': true,
+	   '\r': true,
+	   ' ': true,
+   };
+   class StreamLexer {
+	   constructor() {
+		   this._current = 0;
+		   this._enable_legacy_literals = false;
+	   }
+	   tokenize(stream, options) {
+		   const tokens = [];
+		   this._current = 0;
+		   this._enable_legacy_literals = (options === null || options === void 0 ? void 0 : options.enable_legacy_literals) || false;
+		   let start;
+		   let identifier;
+		   let token;
+		   while (this._current < stream.length) {
+			   if (isAlpha(stream[this._current])) {
+				   start = this._current;
+				   identifier = this.consumeUnquotedIdentifier(stream);
+				   tokens.push({
+					   start,
+					   type: Token.TOK_UNQUOTEDIDENTIFIER,
+					   value: identifier,
+				   });
+			   }
+			   else if (basicTokens[stream[this._current]] !== undefined) {
+				   tokens.push({
+					   start: this._current,
+					   type: basicTokens[stream[this._current]],
+					   value: stream[this._current],
+				   });
+				   this._current += 1;
+			   }
+			   else if (stream[this._current] === '-') {
+				   if (this._current + 1 < stream.length && isNum(stream[this._current + 1])) {
+					   const token = this.consumeNumber(stream);
+					   token && tokens.push(token);
+				   }
+				   else {
+					   const token = {
+						   start: this._current,
+						   type: Token.TOK_MINUS,
+						   value: '-',
+					   };
+					   tokens.push(token);
+					   this._current += 1;
+				   }
+			   }
+			   else if (isNum(stream[this._current])) {
+				   token = this.consumeNumber(stream);
+				   tokens.push(token);
+			   }
+			   else if (stream[this._current] === '[') {
+				   token = this.consumeLBracket(stream);
+				   tokens.push(token);
+			   }
+			   else if (stream[this._current] === '"') {
+				   start = this._current;
+				   identifier = this.consumeQuotedIdentifier(stream);
+				   tokens.push({
+					   start,
+					   type: Token.TOK_QUOTEDIDENTIFIER,
+					   value: identifier,
+				   });
+			   }
+			   else if (stream[this._current] === `'`) {
+				   start = this._current;
+				   identifier = this.consumeRawStringLiteral(stream);
+				   tokens.push({
+					   start,
+					   type: Token.TOK_LITERAL,
+					   value: identifier,
+				   });
+			   }
+			   else if (stream[this._current] === '`') {
+				   start = this._current;
+				   const literal = this.consumeLiteral(stream);
+				   tokens.push({
+					   start,
+					   type: Token.TOK_LITERAL,
+					   value: literal,
+				   });
+			   }
+			   else if (operatorStartToken[stream[this._current]] !== undefined) {
+				   token = this.consumeOperator(stream);
+				   token && tokens.push(token);
+			   }
+			   else if (skipChars[stream[this._current]] !== undefined) {
+				   this._current += 1;
+			   }
+			   else {
+				   const error = new Error(`Syntax error: unknown character: ${stream[this._current]}`);
+				   error.name = 'LexerError';
+				   throw error;
+			   }
+		   }
+		   return tokens;
+	   }
+	   consumeUnquotedIdentifier(stream) {
+		   const start = this._current;
+		   this._current += 1;
+		   while (this._current < stream.length && isAlphaNum(stream[this._current])) {
+			   this._current += 1;
+		   }
+		   return stream.slice(start, this._current);
+	   }
+	   consumeQuotedIdentifier(stream) {
+		   const start = this._current;
+		   this._current += 1;
+		   const maxLength = stream.length;
+		   while (stream[this._current] !== '"' && this._current < maxLength) {
+			   let current = this._current;
+			   if (stream[current] === '\\' && (stream[current + 1] === '\\' || stream[current + 1] === '"')) {
+				   current += 2;
+			   }
+			   else {
+				   current += 1;
+			   }
+			   this._current = current;
+		   }
+		   this._current += 1;
+		   const [value, ok] = this.parseJSON(stream.slice(start, this._current));
+		   if (!ok) {
+			   const error = new Error(`syntax: unexpected end of JSON input`);
+			   error.name = 'LexerError';
+			   throw error;
+		   }
+		   return value;
+	   }
+	   consumeRawStringLiteral(stream) {
+		   const start = this._current;
+		   this._current += 1;
+		   const maxLength = stream.length;
+		   while (stream[this._current] !== `'` && this._current < maxLength) {
+			   let current = this._current;
+			   if (stream[current] === '\\' && (stream[current + 1] === '\\' || stream[current + 1] === `'`)) {
+				   current += 2;
+			   }
+			   else {
+				   current += 1;
+			   }
+			   this._current = current;
+		   }
+		   this._current += 1;
+		   const literal = stream.slice(start + 1, this._current - 1);
+		   return literal.replace(`\\'`, `'`).replace(`\\\\`, `\\`);
+	   }
+	   consumeNumber(stream) {
+		   const start = this._current;
+		   this._current += 1;
+		   const maxLength = stream.length;
+		   while (isNum(stream[this._current]) && this._current < maxLength) {
+			   this._current += 1;
+		   }
+		   const value = parseInt(stream.slice(start, this._current), 10);
+		   return { start, value, type: Token.TOK_NUMBER };
+	   }
+	   consumeLBracket(stream) {
+		   const start = this._current;
+		   this._current += 1;
+		   if (stream[this._current] === '?') {
+			   this._current += 1;
+			   return { start, type: Token.TOK_FILTER, value: '[?' };
+		   }
+		   if (stream[this._current] === ']') {
+			   this._current += 1;
+			   return { start, type: Token.TOK_FLATTEN, value: '[]' };
+		   }
+		   return { start, type: Token.TOK_LBRACKET, value: '[' };
+	   }
+	   consumeOrElse(stream, peek, token, orElse) {
+		   const start = this._current;
+		   this._current += 1;
+		   if (this._current < stream.length && stream[this._current] === peek) {
+			   this._current += 1;
+			   return { start: start, type: orElse, value: stream.slice(start, this._current) };
+		   }
+		   if (token === Token.TOK_EOF) {
+			   const error = new Error(`syntax: unknown incomplete token: ${stream[start]}`);
+			   error.name = 'LexerError';
+			   throw error;
+		   }
+		   return { start: start, type: token, value: stream[start] };
+	   }
+	   consumeOperator(stream) {
+		   const start = this._current;
+		   const startingChar = stream[start];
+		   switch (startingChar) {
+			   case '!':
+				   return this.consumeOrElse(stream, '=', Token.TOK_NOT, Token.TOK_NE);
+			   case '<':
+				   return this.consumeOrElse(stream, '=', Token.TOK_LT, Token.TOK_LTE);
+			   case '>':
+				   return this.consumeOrElse(stream, '=', Token.TOK_GT, Token.TOK_GTE);
+			   case '=':
+				   return this.consumeOrElse(stream, '=', Token.TOK_EOF, Token.TOK_EQ);
+			   case '&':
+				   return this.consumeOrElse(stream, '&', Token.TOK_EXPREF, Token.TOK_AND);
+			   case '|':
+				   return this.consumeOrElse(stream, '|', Token.TOK_PIPE, Token.TOK_OR);
+			   case '/':
+				   return this.consumeOrElse(stream, '/', Token.TOK_DIVIDE, Token.TOK_DIV);
+		   }
+	   }
+	   consumeLiteral(stream) {
+		   this._current += 1;
+		   const start = this._current;
+		   const maxLength = stream.length;
+		   while (stream[this._current] !== '`' && this._current < maxLength) {
+			   let current = this._current;
+			   if (stream[current] === '\\' && (stream[current + 1] === '\\' || stream[current + 1] === '`')) {
+				   current += 2;
+			   }
+			   else {
+				   current += 1;
+			   }
+			   this._current = current;
+		   }
+		   let literalString = stream.slice(start, this._current).trimStart();
+		   literalString = literalString.replace('\\`', '`');
+		   let literal = null;
+		   let ok = false;
+		   // attempts to detect and parse valid JSON
+		   if (this.looksLikeJSON(literalString)) {
+			   [literal, ok] = this.parseJSON(literalString);
+		   }
+		   // invalid JSON values should be converted to quoted
+		   // JSON strings during the JEP-12 deprecation period.
+		   if (!ok && this._enable_legacy_literals) {
+			   [literal, ok] = this.parseJSON(`"${literalString}"`);
+		   }
+		   if (!ok) {
+			   const error = new Error(`Syntax error: unexpected end of JSON input or invalid format for a JSON literal: ${stream[this._current]}`);
+			   error.name = 'LexerError';
+			   throw error;
+		   }
+		   this._current += 1;
+		   return literal;
+	   }
+	   looksLikeJSON(literalString) {
+		   const startingChars = '[{"';
+		   const jsonLiterals = ['true', 'false', 'null'];
+		   const numberLooking = '-0123456789';
+		   if (literalString === '') {
+			   return false;
+		   }
+		   if (startingChars.includes(literalString[0])) {
+			   return true;
+		   }
+		   if (jsonLiterals.includes(literalString)) {
+			   return true;
+		   }
+		   if (numberLooking.includes(literalString[0])) {
+			   const [_, ok] = this.parseJSON(literalString);
+			   return ok;
+		   }
+		   return false;
+	   }
+	   parseJSON(text) {
+		   try {
+			   const json = JSON.parse(text);
+			   return [json, true];
+		   }
+		   catch (_a) {
+			   return [null, false];
+		   }
+	   }
+   }
+   const Lexer = new StreamLexer();
+
+   const bindingPower = {
+	   [Token.TOK_EOF]: 0,
+	   [Token.TOK_UNQUOTEDIDENTIFIER]: 0,
+	   [Token.TOK_QUOTEDIDENTIFIER]: 0,
+	   [Token.TOK_RBRACKET]: 0,
+	   [Token.TOK_RPAREN]: 0,
+	   [Token.TOK_COMMA]: 0,
+	   [Token.TOK_RBRACE]: 0,
+	   [Token.TOK_NUMBER]: 0,
+	   [Token.TOK_CURRENT]: 0,
+	   [Token.TOK_EXPREF]: 0,
+	   [Token.TOK_ROOT]: 0,
+	   [Token.TOK_PIPE]: 1,
+	   [Token.TOK_OR]: 2,
+	   [Token.TOK_AND]: 3,
+	   [Token.TOK_EQ]: 5,
+	   [Token.TOK_GT]: 5,
+	   [Token.TOK_LT]: 5,
+	   [Token.TOK_GTE]: 5,
+	   [Token.TOK_LTE]: 5,
+	   [Token.TOK_NE]: 5,
+	   [Token.TOK_MINUS]: 6,
+	   [Token.TOK_PLUS]: 6,
+	   [Token.TOK_DIV]: 7,
+	   [Token.TOK_DIVIDE]: 7,
+	   [Token.TOK_MODULO]: 7,
+	   [Token.TOK_MULTIPLY]: 7,
+	   [Token.TOK_FLATTEN]: 9,
+	   [Token.TOK_STAR]: 20,
+	   [Token.TOK_FILTER]: 21,
+	   [Token.TOK_DOT]: 40,
+	   [Token.TOK_NOT]: 45,
+	   [Token.TOK_LBRACE]: 50,
+	   [Token.TOK_LBRACKET]: 55,
+	   [Token.TOK_LPAREN]: 60,
+   };
+   class TokenParser {
+	   constructor() {
+		   this.index = 0;
+		   this.tokens = [];
+	   }
+	   parse(expression, options) {
+		   this.loadTokens(expression, options || { enable_legacy_literals: false, });
+		   this.index = 0;
+		   const ast = this.expression(0);
+		   if (this.lookahead(0) !== Token.TOK_EOF) {
+			   const token = this.lookaheadToken(0);
+			   this.errorToken(token, `Syntax error: unexpected token type: ${token.type}, value: ${token.value}`);
+		   }
+		   return ast;
+	   }
+	   loadTokens(expression, options) {
+		   this.tokens = [...Lexer.tokenize(expression, options), { type: Token.TOK_EOF, value: '', start: expression.length }];
+	   }
+	   expression(rbp) {
+		   const leftToken = this.lookaheadToken(0);
+		   this.advance();
+		   let left = this.nud(leftToken);
+		   let currentTokenType = this.lookahead(0);
+		   while (rbp < bindingPower[currentTokenType]) {
+			   this.advance();
+			   left = this.led(currentTokenType, left);
+			   currentTokenType = this.lookahead(0);
+		   }
+		   return left;
+	   }
+	   lookahead(offset) {
+		   return this.tokens[this.index + offset].type;
+	   }
+	   lookaheadToken(offset) {
+		   return this.tokens[this.index + offset];
+	   }
+	   advance() {
+		   this.index += 1;
+	   }
+	   nud(token) {
+		   switch (token.type) {
+			   case Token.TOK_LITERAL:
+				   return { type: 'Literal', value: token.value };
+			   case Token.TOK_UNQUOTEDIDENTIFIER:
+				   return { type: 'Field', name: token.value };
+			   case Token.TOK_QUOTEDIDENTIFIER:
+				   if (this.lookahead(0) === Token.TOK_LPAREN) {
+					   throw new Error('Syntax error: quoted identifier not allowed for function names.');
+				   }
+				   else {
+					   return { type: 'Field', name: token.value };
+				   }
+			   case Token.TOK_NOT: {
+				   const child = this.expression(bindingPower.Not);
+				   return { type: 'NotExpression', child };
+			   }
+			   case Token.TOK_MINUS: {
+				   const child = this.expression(bindingPower.Minus);
+				   return { type: 'Unary', operator: token.type, operand: child };
+			   }
+			   case Token.TOK_PLUS: {
+				   const child = this.expression(bindingPower.Plus);
+				   return { type: 'Unary', operator: token.type, operand: child };
+			   }
+			   case Token.TOK_STAR: {
+				   const left = { type: 'Identity' };
+				   const right = this.lookahead(0) === Token.TOK_RBRACKET ? left : this.parseProjectionRHS(bindingPower.Star);
+				   return { type: 'ValueProjection', left, right };
+			   }
+			   case Token.TOK_FILTER:
+				   return this.led(token.type, { type: 'Identity' });
+			   case Token.TOK_LBRACE:
+				   return this.parseMultiselectHash();
+			   case Token.TOK_FLATTEN: {
+				   const left = { type: 'Flatten', child: { type: 'Identity' } };
+				   const right = this.parseProjectionRHS(bindingPower.Flatten);
+				   return { type: 'Projection', left, right };
+			   }
+			   case Token.TOK_LBRACKET: {
+				   if (this.lookahead(0) === Token.TOK_NUMBER || this.lookahead(0) === Token.TOK_COLON) {
+					   const right = this.parseIndexExpression();
+					   return this.projectIfSlice({ type: 'Identity' }, right);
+				   }
+				   if (this.lookahead(0) === Token.TOK_STAR && this.lookahead(1) === Token.TOK_RBRACKET) {
+					   this.advance();
+					   this.advance();
+					   const right = this.parseProjectionRHS(bindingPower.Star);
+					   return {
+						   left: { type: 'Identity' },
+						   right,
+						   type: 'Projection',
+					   };
+				   }
+				   return this.parseMultiselectList();
+			   }
+			   case Token.TOK_CURRENT:
+				   return { type: Token.TOK_CURRENT };
+			   case Token.TOK_ROOT:
+				   return { type: Token.TOK_ROOT };
+			   case Token.TOK_EXPREF: {
+				   const child = this.expression(bindingPower.Expref);
+				   return { type: 'ExpressionReference', child };
+			   }
+			   case Token.TOK_LPAREN: {
+				   const args = [];
+				   while (this.lookahead(0) !== Token.TOK_RPAREN) {
+					   let expression;
+					   if (this.lookahead(0) === Token.TOK_CURRENT) {
+						   expression = { type: Token.TOK_CURRENT };
+						   this.advance();
+					   }
+					   else {
+						   expression = this.expression(0);
+					   }
+					   args.push(expression);
+				   }
+				   this.match(Token.TOK_RPAREN);
+				   return args[0];
+			   }
+			   default:
+				   this.errorToken(token);
+		   }
+	   }
+	   led(tokenName, left) {
+		   switch (tokenName) {
+			   case Token.TOK_DOT: {
+				   const rbp = bindingPower.Dot;
+				   if (this.lookahead(0) !== Token.TOK_STAR) {
+					   const right = this.parseDotRHS(rbp);
+					   return { type: 'Subexpression', left, right };
+				   }
+				   this.advance();
+				   const right = this.parseProjectionRHS(rbp);
+				   return { type: 'ValueProjection', left, right };
+			   }
+			   case Token.TOK_PIPE: {
+				   const right = this.expression(bindingPower.Pipe);
+				   return { type: 'Pipe', left, right };
+			   }
+			   case Token.TOK_OR: {
+				   const right = this.expression(bindingPower.Or);
+				   return { type: 'OrExpression', left, right };
+			   }
+			   case Token.TOK_AND: {
+				   const right = this.expression(bindingPower.And);
+				   return { type: 'AndExpression', left, right };
+			   }
+			   case Token.TOK_LPAREN: {
+				   if (left.type !== 'Field') {
+					   throw new Error('Syntax error: expected a Field node');
+				   }
+				   const name = left.name;
+				   const args = [];
+				   let expression;
+				   while (this.lookahead(0) !== Token.TOK_RPAREN) {
+					   if (this.lookahead(0) === Token.TOK_CURRENT) {
+						   expression = { type: Token.TOK_CURRENT };
+						   this.advance();
+					   }
+					   else {
+						   expression = this.expression(0);
+					   }
+					   if (this.lookahead(0) === Token.TOK_COMMA) {
+						   this.match(Token.TOK_COMMA);
+					   }
+					   args.push(expression);
+				   }
+				   this.match(Token.TOK_RPAREN);
+				   const node = { name, type: 'Function', children: args };
+				   return node;
+			   }
+			   case Token.TOK_FILTER: {
+				   const condition = this.expression(0);
+				   this.match(Token.TOK_RBRACKET);
+				   const right = this.lookahead(0) === Token.TOK_FLATTEN ? { type: 'Identity' } : this.parseProjectionRHS(bindingPower.Filter);
+				   return { type: 'FilterProjection', left, right, condition };
+			   }
+			   case Token.TOK_FLATTEN: {
+				   const leftNode = { type: 'Flatten', child: left };
+				   const right = this.parseProjectionRHS(bindingPower.Flatten);
+				   return { type: 'Projection', left: leftNode, right };
+			   }
+			   case Token.TOK_EQ:
+			   case Token.TOK_NE:
+			   case Token.TOK_GT:
+			   case Token.TOK_GTE:
+			   case Token.TOK_LT:
+			   case Token.TOK_LTE:
+				   return this.parseComparator(left, tokenName);
+			   case Token.TOK_PLUS:
+			   case Token.TOK_MINUS:
+			   case Token.TOK_MULTIPLY:
+			   case Token.TOK_STAR:
+			   case Token.TOK_DIVIDE:
+			   case Token.TOK_MODULO:
+			   case Token.TOK_DIV:
+				   return this.parseArithmetic(left, tokenName);
+			   case Token.TOK_LBRACKET: {
+				   const token = this.lookaheadToken(0);
+				   if (token.type === Token.TOK_NUMBER || token.type === Token.TOK_COLON) {
+					   const right = this.parseIndexExpression();
+					   return this.projectIfSlice(left, right);
+				   }
+				   this.match(Token.TOK_STAR);
+				   this.match(Token.TOK_RBRACKET);
+				   const right = this.parseProjectionRHS(bindingPower.Star);
+				   return { type: 'Projection', left, right };
+			   }
+			   default:
+				   return this.errorToken(this.lookaheadToken(0));
+		   }
+	   }
+	   match(tokenType) {
+		   if (this.lookahead(0) === tokenType) {
+			   this.advance();
+			   return;
+		   }
+		   else {
+			   const token = this.lookaheadToken(0);
+			   this.errorToken(token, `Syntax error: expected ${tokenType}, got: ${token.type}`);
+		   }
+	   }
+	   errorToken(token, message = '') {
+		   const error = new Error(message || `Syntax error: invalid token (${token.type}): "${token.value}"`);
+		   error.name = 'ParserError';
+		   throw error;
+	   }
+	   parseIndexExpression() {
+		   if (this.lookahead(0) === Token.TOK_COLON || this.lookahead(1) === Token.TOK_COLON) {
+			   return this.parseSliceExpression();
+		   }
+		   const value = Number(this.lookaheadToken(0).value);
+		   this.advance();
+		   this.match(Token.TOK_RBRACKET);
+		   return { type: 'Index', value };
+	   }
+	   projectIfSlice(left, right) {
+		   const indexExpr = { type: 'IndexExpression', left, right };
+		   if (right.type === 'Slice') {
+			   return {
+				   left: indexExpr,
+				   right: this.parseProjectionRHS(bindingPower.Star),
+				   type: 'Projection',
+			   };
+		   }
+		   return indexExpr;
+	   }
+	   parseSliceExpression() {
+		   const parts = [null, null, null];
+		   let index = 0;
+		   let current = this.lookaheadToken(0);
+		   while (current.type != Token.TOK_RBRACKET && index < 3) {
+			   if (current.type === Token.TOK_COLON) {
+				   index++;
+				   if (index === 3) {
+					   this.errorToken(this.lookaheadToken(0), 'Syntax error, too many colons in slice expression');
+				   }
+				   this.advance();
+			   }
+			   else if (current.type === Token.TOK_NUMBER) {
+				   const part = this.lookaheadToken(0).value;
+				   parts[index] = part;
+				   this.advance();
+			   }
+			   else {
+				   const next = this.lookaheadToken(0);
+				   this.errorToken(next, `Syntax error, unexpected token: ${next.value}(${next.type})`);
+			   }
+			   current = this.lookaheadToken(0);
+		   }
+		   this.match(Token.TOK_RBRACKET);
+		   const [start = null, stop = null, step = null] = parts;
+		   return { type: 'Slice', start, stop, step };
+	   }
+	   parseComparator(left, comparator) {
+		   const right = this.expression(bindingPower[comparator]);
+		   return { type: 'Comparator', name: comparator, left, right };
+	   }
+	   parseArithmetic(left, operator) {
+		   const right = this.expression(bindingPower[operator]);
+		   return { type: 'Arithmetic', operator: operator, left, right };
+	   }
+	   parseDotRHS(rbp) {
+		   const lookahead = this.lookahead(0);
+		   const exprTokens = [Token.TOK_UNQUOTEDIDENTIFIER, Token.TOK_QUOTEDIDENTIFIER, Token.TOK_STAR];
+		   if (exprTokens.includes(lookahead)) {
+			   return this.expression(rbp);
+		   }
+		   if (lookahead === Token.TOK_LBRACKET) {
+			   this.match(Token.TOK_LBRACKET);
+			   return this.parseMultiselectList();
+		   }
+		   if (lookahead === Token.TOK_LBRACE) {
+			   this.match(Token.TOK_LBRACE);
+			   return this.parseMultiselectHash();
+		   }
+		   const token = this.lookaheadToken(0);
+		   this.errorToken(token, `Syntax error, unexpected token: ${token.value}(${token.type})`);
+	   }
+	   parseProjectionRHS(rbp) {
+		   if (bindingPower[this.lookahead(0)] < 10) {
+			   return { type: 'Identity' };
+		   }
+		   if (this.lookahead(0) === Token.TOK_LBRACKET) {
+			   return this.expression(rbp);
+		   }
+		   if (this.lookahead(0) === Token.TOK_FILTER) {
+			   return this.expression(rbp);
+		   }
+		   if (this.lookahead(0) === Token.TOK_DOT) {
+			   this.match(Token.TOK_DOT);
+			   return this.parseDotRHS(rbp);
+		   }
+		   const token = this.lookaheadToken(0);
+		   this.errorToken(token, `Syntax error, unexpected token: ${token.value}(${token.type})`);
+	   }
+	   parseMultiselectList() {
+		   const expressions = [];
+		   while (this.lookahead(0) !== Token.TOK_RBRACKET) {
+			   const expression = this.expression(0);
+			   expressions.push(expression);
+			   if (this.lookahead(0) === Token.TOK_COMMA) {
+				   this.match(Token.TOK_COMMA);
+				   if (this.lookahead(0) === Token.TOK_RBRACKET) {
+					   throw new Error('Syntax error: unexpected token Rbracket');
+				   }
+			   }
+		   }
+		   this.match(Token.TOK_RBRACKET);
+		   return { type: 'MultiSelectList', children: expressions };
+	   }
+	   parseMultiselectHash() {
+		   const pairs = [];
+		   const identifierTypes = [Token.TOK_UNQUOTEDIDENTIFIER, Token.TOK_QUOTEDIDENTIFIER];
+		   let keyToken;
+		   let keyName;
+		   let value;
+		   // tslint:disable-next-line: prettier
+		   for (;;) {
+			   keyToken = this.lookaheadToken(0);
+			   if (!identifierTypes.includes(keyToken.type)) {
+				   throw new Error(`Syntax error: expecting an identifier token, got: ${keyToken.type}`);
+			   }
+			   keyName = keyToken.value;
+			   this.advance();
+			   this.match(Token.TOK_COLON);
+			   value = this.expression(0);
+			   pairs.push({ value, type: 'KeyValuePair', name: keyName });
+			   if (this.lookahead(0) === Token.TOK_COMMA) {
+				   this.match(Token.TOK_COMMA);
+			   }
+			   else if (this.lookahead(0) === Token.TOK_RBRACE) {
+				   this.match(Token.TOK_RBRACE);
+				   break;
+			   }
+		   }
+		   return { type: 'MultiSelectHash', children: pairs };
+	   }
+   }
+   const Parser = new TokenParser();
+
+   class Text {
+	   constructor(text) {
+		   this._text = text;
+	   }
+	   get string() {
+		   return this._text;
+	   }
+	   get length() {
+		   return this.codePoints.length;
+	   }
+	   compareTo(other) {
+		   return Text.compare(this, new Text(other));
+	   }
+	   static get comparer() {
+		   const stringComparer = (left, right) => {
+			   return new Text(left).compareTo(right);
+		   };
+		   return stringComparer;
+	   }
+	   static compare(left, right) {
+		   const leftCp = left.codePoints;
+		   const rightCp = right.codePoints;
+		   for (let index = 0; index < Math.min(leftCp.length, rightCp.length); index++) {
+			   if (leftCp[index] === rightCp[index]) {
+				   continue;
+			   }
+			   return (leftCp[index] - rightCp[index]) > 0 ? 1 : -1;
+		   }
+		   return (leftCp.length - rightCp.length) > 0 ? 1 : -1;
+	   }
+	   reverse() {
+		   return String.fromCodePoint(...this.codePoints.reverse());
+	   }
+	   get codePoints() {
+		   const array = [...this._text].map(s => s.codePointAt(0));
+		   return array;
+	   }
+   }
+
+   const findFirst = (subject, sub, start, end) => {
+	   if (!subject || !sub) {
+		   return null;
+	   }
+	   start = Math.max(ensureInteger((start = start || 0)), 0);
+	   end = Math.min(ensureInteger((end = end || subject.length)), subject.length);
+	   const offset = subject.slice(start, end).indexOf(sub);
+	   return offset === -1 ? null : offset + start;
+   };
+   const findLast = (subject, sub, start, end) => {
+	   if (!subject || !sub) {
+		   return null;
+	   }
+	   start = Math.max(ensureInteger((start = start || 0)), 0);
+	   end = Math.min(ensureInteger((end = end || subject.length)), subject.length);
+	   const offset = subject.slice(start, end).lastIndexOf(sub);
+	   const result = offset === -1 ? null : offset + start;
+	   return result;
+   };
+   const lower = (subject) => subject.toLowerCase();
+   const ensurePadFuncParams = (name, width, padding) => {
+	   padding = padding || ' ';
+	   if (padding.length > 1) {
+		   throw new Error(`invalid value, ${name} expects its 'pad' parameter to be a valid string with a single codepoint`);
+	   }
+	   ensurePositiveInteger(width);
+	   return padding;
+   };
+   const padLeft = (subject, width, padding) => {
+	   padding = ensurePadFuncParams('pad_left', width, padding);
+	   return (subject && subject.padStart(width, padding)) || '';
+   };
+   const padRight = (subject, width, padding) => {
+	   padding = ensurePadFuncParams('pad_right', width, padding);
+	   return (subject && subject.padEnd(width, padding)) || '';
+   };
+   const replace = (subject, string, by, count) => {
+	   if (count === 0) {
+		   return subject;
+	   }
+	   if (!count) {
+		   // emulating es2021: String.prototype.replaceAll()
+		   return subject.split(string).join(by);
+	   }
+	   ensurePositiveInteger(count);
+	   [...Array(count).keys()].map(() => (subject = subject.replace(string, by)));
+	   return subject;
+   };
+   const split = (subject, search, count) => {
+	   if (subject.length == 0 && search.length === 0) {
+		   return [];
+	   }
+	   if (count === null || count === undefined) {
+		   return subject.split(search);
+	   }
+	   ensurePositiveInteger(count);
+	   if (count === 0) {
+		   return [subject];
+	   }
+	   const split = subject.split(search);
+	   return [
+		   ...split.slice(0, count),
+		   split.slice(count).join(search)
+	   ];
+   };
+   const trim = (subject, chars) => {
+	   return trimLeft(trimRight(subject, chars), chars);
+   };
+   const trimLeft = (subject, chars) => {
+	   return trimImpl(subject, list => new RegExp(`^[${list}]*(.*?)`), chars);
+   };
+   const trimRight = (subject, chars) => {
+	   return trimImpl(subject, list => new RegExp(`(.*?)[${list}]*\$`), chars);
+   };
+   const trimImpl = (subject, regExper, chars) => {
+	   const pattern = chars ? chars.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&') : '\\s\u0085';
+	   return subject.replace(regExper(pattern), '$1');
+   };
+   const upper = (subject) => subject.toUpperCase();
+
+   var InputArgument;
+   (function (InputArgument) {
+	   InputArgument[InputArgument["TYPE_NUMBER"] = 0] = "TYPE_NUMBER";
+	   InputArgument[InputArgument["TYPE_ANY"] = 1] = "TYPE_ANY";
+	   InputArgument[InputArgument["TYPE_STRING"] = 2] = "TYPE_STRING";
+	   InputArgument[InputArgument["TYPE_ARRAY"] = 3] = "TYPE_ARRAY";
+	   InputArgument[InputArgument["TYPE_OBJECT"] = 4] = "TYPE_OBJECT";
+	   InputArgument[InputArgument["TYPE_BOOLEAN"] = 5] = "TYPE_BOOLEAN";
+	   InputArgument[InputArgument["TYPE_EXPREF"] = 6] = "TYPE_EXPREF";
+	   InputArgument[InputArgument["TYPE_NULL"] = 7] = "TYPE_NULL";
+	   InputArgument[InputArgument["TYPE_ARRAY_NUMBER"] = 8] = "TYPE_ARRAY_NUMBER";
+	   InputArgument[InputArgument["TYPE_ARRAY_STRING"] = 9] = "TYPE_ARRAY_STRING";
+	   InputArgument[InputArgument["TYPE_ARRAY_OBJECT"] = 10] = "TYPE_ARRAY_OBJECT";
+	   InputArgument[InputArgument["TYPE_ARRAY_ARRAY"] = 11] = "TYPE_ARRAY_ARRAY";
+   })(InputArgument || (InputArgument = {}));
+   class Runtime {
+	   constructor(interpreter) {
+		   this.TYPE_NAME_TABLE = {
+			   [InputArgument.TYPE_NUMBER]: 'number',
+			   [InputArgument.TYPE_ANY]: 'any',
+			   [InputArgument.TYPE_STRING]: 'string',
+			   [InputArgument.TYPE_ARRAY]: 'array',
+			   [InputArgument.TYPE_OBJECT]: 'object',
+			   [InputArgument.TYPE_BOOLEAN]: 'boolean',
+			   [InputArgument.TYPE_EXPREF]: 'expression',
+			   [InputArgument.TYPE_NULL]: 'null',
+			   [InputArgument.TYPE_ARRAY_NUMBER]: 'Array<number>',
+			   [InputArgument.TYPE_ARRAY_OBJECT]: 'Array<object>',
+			   [InputArgument.TYPE_ARRAY_STRING]: 'Array<string>',
+			   [InputArgument.TYPE_ARRAY_ARRAY]: 'Array<Array<any>>',
+		   };
+		   this.functionAbs = ([inputValue]) => {
+			   return Math.abs(inputValue);
+		   };
+		   this.functionAvg = ([inputArray]) => {
+			   if (!inputArray || inputArray.length == 0) {
+				   return null;
+			   }
+			   let sum = 0;
+			   for (let i = 0; i < inputArray.length; i += 1) {
+				   sum += inputArray[i];
+			   }
+			   return sum / inputArray.length;
+		   };
+		   this.functionCeil = ([inputValue]) => {
+			   return Math.ceil(inputValue);
+		   };
+		   this.functionContains = ([searchable, searchValue,]) => {
+			   if (Array.isArray(searchable)) {
+				   const array = searchable;
+				   return array.includes(searchValue);
+			   }
+			   if (typeof searchable === 'string') {
+				   const text = searchable;
+				   if (typeof searchValue === 'string') {
+					   return text.includes(searchValue);
+				   }
+			   }
+			   return null;
+		   };
+		   this.functionEndsWith = resolvedArgs => {
+			   const [searchStr, suffix] = resolvedArgs;
+			   return searchStr.includes(suffix, searchStr.length - suffix.length);
+		   };
+		   this.functionFindFirst = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   const search = resolvedArgs[1];
+			   const start = (resolvedArgs.length > 2 && resolvedArgs[2]) || undefined;
+			   const end = (resolvedArgs.length > 3 && resolvedArgs[3]) || undefined;
+			   return findFirst(subject, search, start, end);
+		   };
+		   this.functionFindLast = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   const search = resolvedArgs[1];
+			   const start = (resolvedArgs.length > 2 && resolvedArgs[2]) || undefined;
+			   const end = (resolvedArgs.length > 3 && resolvedArgs[3]) || undefined;
+			   return findLast(subject, search, start, end);
+		   };
+		   this.functionFloor = ([inputValue]) => {
+			   return Math.floor(inputValue);
+		   };
+		   this.functionFromItems = ([array]) => {
+			   array.map((pair) => {
+				   if (pair.length != 2 || typeof pair[0] !== 'string') {
+					   throw new Error('invalid value, each array must contain two elements, a pair of string and value');
+				   }
+			   });
+			   return Object.fromEntries(array);
+		   };
+		   this.functionGroupBy = ([array, exprefNode]) => {
+			   const keyFunction = this.createKeyFunction(exprefNode, [InputArgument.TYPE_STRING]);
+			   return array.reduce((acc, cur) => {
+				   const k = keyFunction(cur !== null && cur !== void 0 ? cur : {});
+				   const target = (acc[k] = acc[k] || []);
+				   target.push(cur);
+				   return acc;
+			   }, {});
+		   };
+		   this.functionItems = ([inputValue]) => {
+			   return Object.entries(inputValue);
+		   };
+		   this.functionJoin = resolvedArgs => {
+			   const [joinChar, listJoin] = resolvedArgs;
+			   return listJoin.join(joinChar);
+		   };
+		   this.functionKeys = ([inputObject]) => {
+			   return Object.keys(inputObject);
+		   };
+		   this.functionLength = ([inputValue]) => {
+			   if (typeof inputValue === 'string') {
+				   return new Text(inputValue).length;
+			   }
+			   if (Array.isArray(inputValue)) {
+				   return inputValue.length;
+			   }
+			   return Object.keys(inputValue).length;
+		   };
+		   this.functionLet = ([inputScope, exprefNode]) => {
+			   var _a;
+			   const interpreter = (_a = this._interpreter) === null || _a === void 0 ? void 0 : _a.withScope(inputScope);
+			   return interpreter.visit(exprefNode, exprefNode.context);
+		   };
+		   this.functionLower = ([subject]) => {
+			   return lower(subject);
+		   };
+		   this.functionMap = ([exprefNode, elements]) => {
+			   if (!this._interpreter) {
+				   return [];
+			   }
+			   const mapped = [];
+			   const interpreter = this._interpreter;
+			   for (let i = 0; i < elements.length; i += 1) {
+				   mapped.push(interpreter.visit(exprefNode, elements[i]));
+			   }
+			   return mapped;
+		   };
+		   this.functionMax = ([inputValue]) => {
+			   if (!inputValue.length) {
+				   return null;
+			   }
+			   const typeName = this.getTypeName(inputValue[0]);
+			   if (typeName === InputArgument.TYPE_NUMBER) {
+				   return Math.max(...inputValue);
+			   }
+			   const elements = inputValue;
+			   let maxElement = elements[0];
+			   for (let i = 1; i < elements.length; i += 1) {
+				   if (maxElement.localeCompare(elements[i]) < 0) {
+					   maxElement = elements[i];
+				   }
+			   }
+			   return maxElement;
+		   };
+		   this.functionMaxBy = resolvedArgs => {
+			   const exprefNode = resolvedArgs[1];
+			   const resolvedArray = resolvedArgs[0];
+			   const keyFunction = this.createKeyFunction(exprefNode, [InputArgument.TYPE_NUMBER, InputArgument.TYPE_STRING]);
+			   let maxNumber = -Infinity;
+			   let maxRecord;
+			   let current;
+			   for (let i = 0; i < resolvedArray.length; i += 1) {
+				   current = keyFunction && keyFunction(resolvedArray[i]);
+				   if (current !== undefined && current > maxNumber) {
+					   maxNumber = current;
+					   maxRecord = resolvedArray[i];
+				   }
+			   }
+			   return maxRecord || null;
+		   };
+		   this.functionMerge = resolvedArgs => {
+			   let merged = {};
+			   for (let i = 0; i < resolvedArgs.length; i += 1) {
+				   const current = resolvedArgs[i];
+				   merged = Object.assign(merged, current);
+			   }
+			   return merged;
+		   };
+		   this.functionMin = ([inputValue]) => {
+			   if (!inputValue.length) {
+				   return null;
+			   }
+			   const typeName = this.getTypeName(inputValue[0]);
+			   if (typeName === InputArgument.TYPE_NUMBER) {
+				   return Math.min(...inputValue);
+			   }
+			   const elements = inputValue;
+			   let minElement = elements[0];
+			   for (let i = 1; i < elements.length; i += 1) {
+				   if (elements[i].localeCompare(minElement) < 0) {
+					   minElement = elements[i];
+				   }
+			   }
+			   return minElement;
+		   };
+		   this.functionMinBy = resolvedArgs => {
+			   const exprefNode = resolvedArgs[1];
+			   const resolvedArray = resolvedArgs[0];
+			   const keyFunction = this.createKeyFunction(exprefNode, [InputArgument.TYPE_NUMBER, InputArgument.TYPE_STRING]);
+			   let minNumber = Infinity;
+			   let minRecord;
+			   let current;
+			   for (let i = 0; i < resolvedArray.length; i += 1) {
+				   current = keyFunction && keyFunction(resolvedArray[i]);
+				   if (current !== undefined && current < minNumber) {
+					   minNumber = current;
+					   minRecord = resolvedArray[i];
+				   }
+			   }
+			   return minRecord || null;
+		   };
+		   this.functionNotNull = resolvedArgs => {
+			   for (let i = 0; i < resolvedArgs.length; i += 1) {
+				   if (this.getTypeName(resolvedArgs[i]) !== InputArgument.TYPE_NULL) {
+					   return resolvedArgs[i];
+				   }
+			   }
+			   return null;
+		   };
+		   this.functionPadLeft = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   const width = resolvedArgs[1];
+			   const padding = (resolvedArgs.length > 2 && resolvedArgs[2]) || undefined;
+			   return padLeft(subject, width, padding);
+		   };
+		   this.functionPadRight = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   const width = resolvedArgs[1];
+			   const padding = (resolvedArgs.length > 2 && resolvedArgs[2]) || undefined;
+			   return padRight(subject, width, padding);
+		   };
+		   this.functionReplace = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   const string = resolvedArgs[1];
+			   const by = resolvedArgs[2];
+			   return replace(subject, string, by, resolvedArgs.length > 3 ? resolvedArgs[3] : undefined);
+		   };
+		   this.functionSplit = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   const search = resolvedArgs[1];
+			   return split(subject, search, resolvedArgs.length > 2 ? resolvedArgs[2] : undefined);
+		   };
+		   this.functionReverse = ([inputValue]) => {
+			   const typeName = this.getTypeName(inputValue);
+			   if (typeName === InputArgument.TYPE_STRING) {
+				   return new Text(inputValue)
+					   .reverse();
+			   }
+			   const reversedArray = inputValue.slice(0);
+			   reversedArray.reverse();
+			   return reversedArray;
+		   };
+		   this.functionSort = ([inputValue]) => {
+			   if (inputValue.length == 0) {
+				   return inputValue;
+			   }
+			   if (typeof inputValue[0] === 'string') {
+				   return [...inputValue].sort(Text.comparer);
+			   }
+			   return [...inputValue].sort();
+		   };
+		   this.functionSortBy = resolvedArgs => {
+			   const sortedArray = resolvedArgs[0].slice(0);
+			   if (sortedArray.length === 0) {
+				   return sortedArray;
+			   }
+			   const interpreter = this._interpreter;
+			   const exprefNode = resolvedArgs[1];
+			   const requiredType = this.getTypeName(interpreter.visit(exprefNode, sortedArray[0]));
+			   if (requiredType !== undefined && ![InputArgument.TYPE_NUMBER, InputArgument.TYPE_STRING].includes(requiredType)) {
+				   throw new Error(`Invalid type: unexpected type (${this.TYPE_NAME_TABLE[requiredType]})`);
+			   }
+			   function throwInvalidTypeError(rt, item) {
+				   throw new Error(`Invalid type: expected (${rt.TYPE_NAME_TABLE[requiredType]}), received ${rt.TYPE_NAME_TABLE[rt.getTypeName(item)]}`);
+			   }
+			   return sortedArray.sort((a, b) => {
+				   const exprA = interpreter.visit(exprefNode, a);
+				   const exprB = interpreter.visit(exprefNode, b);
+				   if (this.getTypeName(exprA) !== requiredType) {
+					   throwInvalidTypeError(this, exprA);
+				   }
+				   else if (this.getTypeName(exprB) !== requiredType) {
+					   throwInvalidTypeError(this, exprB);
+				   }
+				   if (requiredType === InputArgument.TYPE_STRING) {
+					   return Text.comparer(exprA, exprB);
+				   }
+				   return exprA - exprB;
+			   });
+		   };
+		   this.functionStartsWith = ([searchable, searchStr]) => {
+			   return searchable.startsWith(searchStr);
+		   };
+		   this.functionSum = ([inputValue]) => {
+			   return inputValue.reduce((x, y) => x + y, 0);
+		   };
+		   this.functionToArray = ([inputValue]) => {
+			   if (this.getTypeName(inputValue) === InputArgument.TYPE_ARRAY) {
+				   return inputValue;
+			   }
+			   return [inputValue];
+		   };
+		   this.functionToNumber = ([inputValue]) => {
+			   const typeName = this.getTypeName(inputValue);
+			   let convertedValue;
+			   if (typeName === InputArgument.TYPE_NUMBER) {
+				   return inputValue;
+			   }
+			   if (typeName === InputArgument.TYPE_STRING) {
+				   convertedValue = +inputValue;
+				   if (!isNaN(convertedValue)) {
+					   return convertedValue;
+				   }
+			   }
+			   return null;
+		   };
+		   this.functionToString = ([inputValue]) => {
+			   if (this.getTypeName(inputValue) === InputArgument.TYPE_STRING) {
+				   return inputValue;
+			   }
+			   return JSON.stringify(inputValue);
+		   };
+		   this.functionTrim = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   return trim(subject, resolvedArgs.length > 1 ? resolvedArgs[1] : undefined);
+		   };
+		   this.functionTrimLeft = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   return trimLeft(subject, resolvedArgs.length > 1 ? resolvedArgs[1] : undefined);
+		   };
+		   this.functionTrimRight = resolvedArgs => {
+			   const subject = resolvedArgs[0];
+			   return trimRight(subject, resolvedArgs.length > 1 ? resolvedArgs[1] : undefined);
+		   };
+		   this.functionType = ([inputValue]) => {
+			   switch (this.getTypeName(inputValue)) {
+				   case InputArgument.TYPE_NUMBER:
+					   return 'number';
+				   case InputArgument.TYPE_STRING:
+					   return 'string';
+				   case InputArgument.TYPE_ARRAY:
+					   return 'array';
+				   case InputArgument.TYPE_OBJECT:
+					   return 'object';
+				   case InputArgument.TYPE_BOOLEAN:
+					   return 'boolean';
+				   case InputArgument.TYPE_NULL:
+					   return 'null';
+				   default:
+					   throw new Error('invalid-type');
+			   }
+		   };
+		   this.functionUpper = ([subject]) => {
+			   return upper(subject);
+		   };
+		   this.functionValues = ([inputObject]) => {
+			   return Object.values(inputObject);
+		   };
+		   this.functionZip = array => {
+			   const length = Math.min(...array.map(arr => arr.length));
+			   const result = Array(length)
+				   .fill(null)
+				   .map((_, index) => array.map(arr => arr[index]));
+			   return result;
+		   };
+		   this.functionTable = {
+			   abs: {
+				   _func: this.functionAbs,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+					   },
+				   ],
+			   },
+			   avg: {
+				   _func: this.functionAvg,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY_NUMBER],
+					   },
+				   ],
+			   },
+			   ceil: {
+				   _func: this.functionCeil,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+					   },
+				   ],
+			   },
+			   contains: {
+				   _func: this.functionContains,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING, InputArgument.TYPE_ARRAY],
+					   },
+					   {
+						   types: [InputArgument.TYPE_ANY],
+					   },
+				   ],
+			   },
+			   ends_with: {
+				   _func: this.functionEndsWith,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+				   ],
+			   },
+			   find_first: {
+				   _func: this.functionFindFirst,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+						   optional: true,
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   find_last: {
+				   _func: this.functionFindLast,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+						   optional: true,
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   floor: {
+				   _func: this.functionFloor,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+					   },
+				   ],
+			   },
+			   from_items: {
+				   _func: this.functionFromItems,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY_ARRAY],
+					   },
+				   ],
+			   },
+			   group_by: {
+				   _func: this.functionGroupBy,
+				   _signature: [{ types: [InputArgument.TYPE_ARRAY] }, { types: [InputArgument.TYPE_EXPREF] }],
+			   },
+			   items: {
+				   _func: this.functionItems,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_OBJECT],
+					   },
+				   ],
+			   },
+			   join: {
+				   _func: this.functionJoin,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_ARRAY_STRING],
+					   },
+				   ],
+			   },
+			   keys: {
+				   _func: this.functionKeys,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_OBJECT],
+					   },
+				   ],
+			   },
+			   let: {
+				   _func: this.functionLet,
+				   _signature: [{ types: [InputArgument.TYPE_OBJECT] }, { types: [InputArgument.TYPE_EXPREF] }],
+			   },
+			   length: {
+				   _func: this.functionLength,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING, InputArgument.TYPE_ARRAY, InputArgument.TYPE_OBJECT],
+					   },
+				   ],
+			   },
+			   lower: {
+				   _func: this.functionLower,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+				   ],
+			   },
+			   map: {
+				   _func: this.functionMap,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_EXPREF],
+					   },
+					   {
+						   types: [InputArgument.TYPE_ARRAY],
+					   },
+				   ],
+			   },
+			   max: {
+				   _func: this.functionMax,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY_NUMBER, InputArgument.TYPE_ARRAY_STRING],
+					   },
+				   ],
+			   },
+			   max_by: {
+				   _func: this.functionMaxBy,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY],
+					   },
+					   {
+						   types: [InputArgument.TYPE_EXPREF],
+					   },
+				   ],
+			   },
+			   merge: {
+				   _func: this.functionMerge,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_OBJECT],
+						   variadic: true,
+					   },
+				   ],
+			   },
+			   min: {
+				   _func: this.functionMin,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY_NUMBER, InputArgument.TYPE_ARRAY_STRING],
+					   },
+				   ],
+			   },
+			   min_by: {
+				   _func: this.functionMinBy,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY],
+					   },
+					   {
+						   types: [InputArgument.TYPE_EXPREF],
+					   },
+				   ],
+			   },
+			   not_null: {
+				   _func: this.functionNotNull,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ANY],
+						   variadic: true,
+					   },
+				   ],
+			   },
+			   pad_left: {
+				   _func: this.functionPadLeft,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   pad_right: {
+				   _func: this.functionPadRight,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   replace: {
+				   _func: this.functionReplace,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   split: {
+				   _func: this.functionSplit,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_NUMBER],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   reverse: {
+				   _func: this.functionReverse,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING, InputArgument.TYPE_ARRAY],
+					   },
+				   ],
+			   },
+			   sort: {
+				   _func: this.functionSort,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY_STRING, InputArgument.TYPE_ARRAY_NUMBER],
+					   },
+				   ],
+			   },
+			   sort_by: {
+				   _func: this.functionSortBy,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY],
+					   },
+					   {
+						   types: [InputArgument.TYPE_EXPREF],
+					   },
+				   ],
+			   },
+			   starts_with: {
+				   _func: this.functionStartsWith,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+				   ],
+			   },
+			   sum: {
+				   _func: this.functionSum,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY_NUMBER],
+					   },
+				   ],
+			   },
+			   to_array: {
+				   _func: this.functionToArray,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ANY],
+					   },
+				   ],
+			   },
+			   to_number: {
+				   _func: this.functionToNumber,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ANY],
+					   },
+				   ],
+			   },
+			   to_string: {
+				   _func: this.functionToString,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ANY],
+					   },
+				   ],
+			   },
+			   trim: {
+				   _func: this.functionTrim,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   trim_left: {
+				   _func: this.functionTrimLeft,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   trim_right: {
+				   _func: this.functionTrimRight,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+					   {
+						   types: [InputArgument.TYPE_STRING],
+						   optional: true,
+					   },
+				   ],
+			   },
+			   type: {
+				   _func: this.functionType,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ANY],
+					   },
+				   ],
+			   },
+			   upper: {
+				   _func: this.functionUpper,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_STRING],
+					   },
+				   ],
+			   },
+			   values: {
+				   _func: this.functionValues,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_OBJECT],
+					   },
+				   ],
+			   },
+			   zip: {
+				   _func: this.functionZip,
+				   _signature: [
+					   {
+						   types: [InputArgument.TYPE_ARRAY],
+						   variadic: true,
+					   },
+				   ],
+			   },
+		   };
+		   this._interpreter = interpreter;
+	   }
+	   registerFunction(name, customFunction, signature) {
+		   if (name in this.functionTable) {
+			   throw new Error(`Function already defined: ${name}()`);
+		   }
+		   this.functionTable[name] = {
+			   _func: customFunction.bind(this),
+			   _signature: signature,
+		   };
+	   }
+	   callFunction(name, resolvedArgs) {
+		   const functionEntry = this.functionTable[name];
+		   if (functionEntry === undefined) {
+			   throw new Error(`Unknown function: ${name}()`);
+		   }
+		   this.validateArgs(name, resolvedArgs, functionEntry._signature);
+		   return functionEntry._func.call(this, resolvedArgs);
+	   }
+	   validateInputSignatures(name, signature) {
+		   for (let i = 0; i < signature.length; i += 1) {
+			   if ('variadic' in signature[i] && i !== signature.length - 1) {
+				   throw new Error(`Invalid arity: ${name}() 'variadic' argument ${i + 1} must occur last`);
+			   }
+		   }
+	   }
+	   validateArgs(name, args, signature) {
+		   var _a, _b;
+		   let pluralized;
+		   this.validateInputSignatures(name, signature);
+		   const numberOfRequiredArgs = signature.filter(argSignature => { var _a; return (_a = !argSignature.optional) !== null && _a !== void 0 ? _a : false; }).length;
+		   const lastArgIsVariadic = (_b = (_a = signature[signature.length - 1]) === null || _a === void 0 ? void 0 : _a.variadic) !== null && _b !== void 0 ? _b : false;
+		   const tooFewArgs = args.length < numberOfRequiredArgs;
+		   const tooManyArgs = args.length > signature.length;
+		   const tooFewModifier = tooFewArgs && ((!lastArgIsVariadic && numberOfRequiredArgs > 1) || lastArgIsVariadic) ? 'at least ' : '';
+		   if ((lastArgIsVariadic && tooFewArgs) || (!lastArgIsVariadic && (tooFewArgs || tooManyArgs))) {
+			   pluralized = signature.length > 1;
+			   throw new Error(`Invalid arity: ${name}() takes ${tooFewModifier}${numberOfRequiredArgs} argument${(pluralized && 's') || ''} but received ${args.length}`);
+		   }
+		   let currentSpec;
+		   let actualType;
+		   let typeMatched;
+		   for (let i = 0; i < signature.length; i += 1) {
+			   typeMatched = false;
+			   currentSpec = signature[i].types;
+			   actualType = this.getTypeName(args[i]);
+			   let j;
+			   for (j = 0; j < currentSpec.length; j += 1) {
+				   if (actualType !== undefined && this.typeMatches(actualType, currentSpec[j], args[i])) {
+					   typeMatched = true;
+					   break;
+				   }
+			   }
+			   if (!typeMatched && actualType !== undefined) {
+				   const expected = currentSpec
+					   .map((typeIdentifier) => {
+					   return this.TYPE_NAME_TABLE[typeIdentifier];
+				   })
+					   .join(' | ');
+				   throw new Error(`Invalid type: ${name}() expected argument ${i + 1} to be type (${expected}) but received type ${this.TYPE_NAME_TABLE[actualType]} instead.`);
+			   }
+		   }
+	   }
+	   typeMatches(actual, expected, argValue) {
+		   if (expected === InputArgument.TYPE_ANY) {
+			   return true;
+		   }
+		   if (expected === InputArgument.TYPE_ARRAY_STRING ||
+			   expected === InputArgument.TYPE_ARRAY_NUMBER ||
+			   expected === InputArgument.TYPE_ARRAY_OBJECT ||
+			   expected === InputArgument.TYPE_ARRAY_ARRAY ||
+			   expected === InputArgument.TYPE_ARRAY) {
+			   if (expected === InputArgument.TYPE_ARRAY) {
+				   return actual === InputArgument.TYPE_ARRAY;
+			   }
+			   if (actual === InputArgument.TYPE_ARRAY) {
+				   let subtype;
+				   if (expected === InputArgument.TYPE_ARRAY_NUMBER) {
+					   subtype = InputArgument.TYPE_NUMBER;
+				   }
+				   else if (expected === InputArgument.TYPE_ARRAY_OBJECT) {
+					   subtype = InputArgument.TYPE_OBJECT;
+				   }
+				   else if (expected === InputArgument.TYPE_ARRAY_STRING) {
+					   subtype = InputArgument.TYPE_STRING;
+				   }
+				   else if (expected === InputArgument.TYPE_ARRAY_ARRAY) {
+					   subtype = InputArgument.TYPE_ARRAY;
+				   }
+				   const array = argValue;
+				   for (let i = 0; i < array.length; i += 1) {
+					   const typeName = this.getTypeName(array[i]);
+					   if (typeName !== undefined && subtype !== undefined && !this.typeMatches(typeName, subtype, array[i])) {
+						   return false;
+					   }
+				   }
+				   return true;
+			   }
+		   }
+		   else {
+			   return actual === expected;
+		   }
+		   return false;
+	   }
+	   getTypeName(obj) {
+		   switch (Object.prototype.toString.call(obj)) {
+			   case '[object String]':
+				   return InputArgument.TYPE_STRING;
+			   case '[object Number]':
+				   return InputArgument.TYPE_NUMBER;
+			   case '[object Array]':
+				   return InputArgument.TYPE_ARRAY;
+			   case '[object Boolean]':
+				   return InputArgument.TYPE_BOOLEAN;
+			   case '[object Null]':
+				   return InputArgument.TYPE_NULL;
+			   case '[object Object]':
+				   if (obj.expref) {
+					   return InputArgument.TYPE_EXPREF;
+				   }
+				   return InputArgument.TYPE_OBJECT;
+			   default:
+				   return;
+		   }
+	   }
+	   createKeyFunction(exprefNode, allowedTypes) {
+		   const interpreter = this._interpreter;
+		   const keyFunc = (x) => {
+			   const current = interpreter.visit(exprefNode, x);
+			   if (!allowedTypes.includes(this.getTypeName(current))) {
+				   const msg = `Invalid type: expected one of (${allowedTypes
+					 .map(t => this.TYPE_NAME_TABLE[t])
+					 .join(' | ')}), received ${this.TYPE_NAME_TABLE[this.getTypeName(current)]}`;
+				   throw new Error(msg);
+			   }
+			   return current;
+		   };
+		   return keyFunc;
+	   }
+   }
+
+   class ScopeChain {
+	   constructor() {
+		   this.inner = undefined;
+		   this.data = {};
+	   }
+	   withScope(data) {
+		   const outer = new ScopeChain();
+		   outer.inner = this;
+		   outer.data = data;
+		   return outer;
+	   }
+	   getValue(identifier) {
+		   if (identifier in this.data) {
+			   const result = this.data[identifier];
+			   if (result) {
+				   return result;
+			   }
+		   }
+		   if (this.inner) {
+			   return this.inner.getValue(identifier);
+		   }
+		   return null;
+	   }
+   }
+
+   class TreeInterpreter$1 {
+	   constructor() {
+		   this._rootValue = null;
+		   this._scope = undefined;
+		   this.runtime = new Runtime(this);
+	   }
+	   withScope(scope) {
+		   var _a;
+		   const interpreter = new TreeInterpreter$1();
+		   interpreter._rootValue = this._rootValue;
+		   interpreter._scope = (_a = this._scope) === null || _a === void 0 ? void 0 : _a.withScope(scope);
+		   return interpreter;
+	   }
+	   search(node, value) {
+		   this._rootValue = value;
+		   this._scope = new ScopeChain();
+		   return this.visit(node, value);
+	   }
+	   visit(node, value) {
+		   var _a, _b, _c, _d;
+		   switch (node.type) {
+			   case 'Field':
+				   const identifier = node.name;
+				   let result = null;
+				   if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+					   result = (_a = value[identifier]) !== null && _a !== void 0 ? _a : null;
+				   }
+				   if (result == null) {
+					   result = (_c = (_b = this._scope) === null || _b === void 0 ? void 0 : _b.getValue(identifier)) !== null && _c !== void 0 ? _c : null;
+				   }
+				   return result;
+			   case 'IndexExpression':
+				   return this.visit(node.right, this.visit(node.left, value));
+			   case 'Subexpression': {
+				   const result = this.visit(node.left, value);
+				   return result != null && this.visit(node.right, result) || null;
+			   }
+			   case 'Index': {
+				   if (!Array.isArray(value)) {
+					   return null;
+				   }
+				   const index = node.value < 0 ? value.length + node.value : node.value;
+				   return (_d = value[index]) !== null && _d !== void 0 ? _d : null;
+			   }
+			   case 'Slice': {
+				   if (!Array.isArray(value) && typeof value !== 'string') {
+					   return null;
+				   }
+				   const { start, stop, step } = this.computeSliceParams(value.length, node);
+				   if (typeof value === 'string') {
+					   // string slices is implemented by slicing
+					   // the corresponding array of codepoints and
+					   // converting the result back to a string
+					   const chars = [...value];
+					   const sliced = this.slice(chars, start, stop, step);
+					   return sliced.join('');
+				   }
+				   else {
+					   return this.slice(value, start, stop, step);
+				   }
+			   }
+			   case 'Projection': {
+				   const { left, right } = node;
+				   // projections typically operate on arrays
+				   // string slicing produces a 'Projection' whose
+				   // first child is an 'IndexExpression' whose
+				   // second child is an 'Slice'
+				   // we allow execution of the left index-expression
+				   // to return a string only if the AST has this
+				   // specific shape
+				   let allowString = false;
+				   if (left.type === 'IndexExpression' && left.right.type === 'Slice') {
+					   allowString = true;
+				   }
+				   const base = this.visit(left, value);
+				   if (allowString && typeof base === 'string') {
+					   return base;
+				   }
+				   if (!Array.isArray(base)) {
+					   return null;
+				   }
+				   const collected = [];
+				   for (const elem of base) {
+					   const current = this.visit(right, elem);
+					   if (current !== null) {
+						   collected.push(current);
+					   }
+				   }
+				   return collected;
+			   }
+			   case 'ValueProjection': {
+				   const { left, right } = node;
+				   const base = this.visit(left, value);
+				   if (base === null || typeof base !== 'object' || Array.isArray(base)) {
+					   return null;
+				   }
+				   const collected = [];
+				   const values = Object.values(base);
+				   for (const elem of values) {
+					   const current = this.visit(right, elem);
+					   if (current !== null) {
+						   collected.push(current);
+					   }
+				   }
+				   return collected;
+			   }
+			   case 'FilterProjection': {
+				   const { left, right, condition } = node;
+				   const base = this.visit(left, value);
+				   if (!Array.isArray(base)) {
+					   return null;
+				   }
+				   const results = [];
+				   for (const elem of base) {
+					   const matched = this.visit(condition, elem);
+					   if (isFalse(matched)) {
+						   continue;
+					   }
+					   const result = this.visit(right, elem);
+					   if (result !== null) {
+						   results.push(result);
+					   }
+				   }
+				   return results;
+			   }
+			   case 'Arithmetic': {
+				   const first = this.visit(node.left, value);
+				   const second = this.visit(node.right, value);
+				   switch (node.operator) {
+					   case Token.TOK_PLUS:
+						   return add(first, second);
+					   case Token.TOK_MINUS:
+						   return sub(first, second);
+					   case Token.TOK_MULTIPLY:
+					   case Token.TOK_STAR:
+						   return mul(first, second);
+					   case Token.TOK_DIVIDE:
+						   return divide(first, second);
+					   case Token.TOK_MODULO:
+						   return mod(first, second);
+					   case Token.TOK_DIV:
+						   return div(first, second);
+					   default:
+						   throw new Error(`Syntax error: unknown arithmetic operator: ${node.operator}`);
+				   }
+			   }
+			   case 'Unary': {
+				   const operand = this.visit(node.operand, value);
+				   switch (node.operator) {
+					   case Token.TOK_PLUS:
+						   ensureNumbers(operand);
+						   return operand;
+					   case Token.TOK_MINUS:
+						   ensureNumbers(operand);
+						   return -operand;
+					   default:
+						   throw new Error(`Syntax error: unknown arithmetic operator: ${node.operator}`);
+				   }
+			   }
+			   case 'Comparator': {
+				   const first = this.visit(node.left, value);
+				   const second = this.visit(node.right, value);
+				   // equality is an exact match
+				   switch (node.name) {
+					   case 'EQ':
+						   return strictDeepEqual(first, second);
+					   case 'NE':
+						   return !strictDeepEqual(first, second);
+				   }
+				   // ordering operators are only valid for numbers
+				   if (typeof first !== 'number' || typeof second !== 'number') {
+					   return null;
+				   }
+				   switch (node.name) {
+					   case 'GT':
+						   return first > second;
+					   case 'GTE':
+						   return first >= second;
+					   case 'LT':
+						   return first < second;
+					   case 'LTE':
+						   return first <= second;
+				   }
+			   }
+			   case 'Flatten': {
+				   const original = this.visit(node.child, value);
+				   return Array.isArray(original) ? original.flat() : null;
+			   }
+			   case 'Root':
+				   return this._rootValue;
+			   case 'MultiSelectList': {
+				   const collected = [];
+				   for (const child of node.children) {
+					   collected.push(this.visit(child, value));
+				   }
+				   return collected;
+			   }
+			   case 'MultiSelectHash': {
+				   const collected = {};
+				   for (const child of node.children) {
+					   collected[child.name] = this.visit(child.value, value);
+				   }
+				   return collected;
+			   }
+			   case 'OrExpression': {
+				   const result = this.visit(node.left, value);
+				   if (isFalse(result)) {
+					   return this.visit(node.right, value);
+				   }
+				   return result;
+			   }
+			   case 'AndExpression': {
+				   const result = this.visit(node.left, value);
+				   if (isFalse(result)) {
+					   return result;
+				   }
+				   return this.visit(node.right, value);
+			   }
+			   case 'NotExpression':
+				   return isFalse(this.visit(node.child, value));
+			   case 'Literal':
+				   return node.value;
+			   case 'Pipe':
+				   return this.visit(node.right, this.visit(node.left, value));
+			   case 'Function': {
+				   const args = [];
+				   for (const child of node.children) {
+					   args.push(this.visit(child, value));
+				   }
+				   return this.runtime.callFunction(node.name, args);
+			   }
+			   case 'ExpressionReference':
+				   return Object.assign({ expref: true, context: value }, node.child);
+			   case 'Current':
+			   case 'Identity':
+				   return value;
+		   }
+	   }
+	   computeSliceParams(arrayLength, sliceNode) {
+		   let { start, stop, step } = sliceNode;
+		   if (step === null) {
+			   step = 1;
+		   }
+		   else if (step === 0) {
+			   const error = new Error('Invalid value: slice step cannot be 0');
+			   error.name = 'RuntimeError';
+			   throw error;
+		   }
+		   start = start === null ? (step < 0 ? arrayLength - 1 : 0) : this.capSliceRange(arrayLength, start, step);
+		   stop = stop === null ? (step < 0 ? -1 : arrayLength) : this.capSliceRange(arrayLength, stop, step);
+		   return { start, stop, step };
+	   }
+	   capSliceRange(arrayLength, actualValue, step) {
+		   let nextActualValue = actualValue;
+		   if (nextActualValue < 0) {
+			   nextActualValue += arrayLength;
+			   if (nextActualValue < 0) {
+				   nextActualValue = step < 0 ? -1 : 0;
+			   }
+		   }
+		   else if (nextActualValue >= arrayLength) {
+			   nextActualValue = step < 0 ? arrayLength - 1 : arrayLength;
+		   }
+		   return nextActualValue;
+	   }
+	   slice(collection, start, end, step) {
+		   const result = [];
+		   if (step > 0) {
+			   for (let i = start; i < end; i += step) {
+				   result.push(collection[i]);
+			   }
+		   }
+		   else {
+			   for (let i = start; i > end; i += step) {
+				   result.push(collection[i]);
+			   }
+		   }
+		   return result;
+	   }
+   }
+   const TreeInterpreterInstance = new TreeInterpreter$1();
+
+   const TYPE_ANY = InputArgument.TYPE_ANY;
+   const TYPE_ARRAY = InputArgument.TYPE_ARRAY;
+   const TYPE_ARRAY_ARRAY = InputArgument.TYPE_ARRAY_ARRAY;
+   const TYPE_ARRAY_NUMBER = InputArgument.TYPE_ARRAY_NUMBER;
+   const TYPE_ARRAY_OBJECT = InputArgument.TYPE_ARRAY_OBJECT;
+   const TYPE_ARRAY_STRING = InputArgument.TYPE_ARRAY_STRING;
+   const TYPE_BOOLEAN = InputArgument.TYPE_BOOLEAN;
+   const TYPE_EXPREF = InputArgument.TYPE_EXPREF;
+   const TYPE_NULL = InputArgument.TYPE_NULL;
+   const TYPE_NUMBER = InputArgument.TYPE_NUMBER;
+   const TYPE_OBJECT = InputArgument.TYPE_OBJECT;
+   const TYPE_STRING = InputArgument.TYPE_STRING;
+   function compile(expression, options) {
+	   const nodeTree = Parser.parse(expression, options);
+	   return nodeTree;
+   }
+   function tokenize(expression, options) {
+	   return Lexer.tokenize(expression, options);
+   }
+   const registerFunction = (functionName,
+   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   customFunction, signature) => {
+	   TreeInterpreterInstance.runtime.registerFunction(functionName, customFunction, signature);
+   };
+   function search(data, expression, options) {
+	   const nodeTree = Parser.parse(expression, options);
+	   return TreeInterpreterInstance.search(nodeTree, data);
+   }
+   function Scope() {
+	   return new ScopeChain();
+   }
+   const TreeInterpreter = TreeInterpreterInstance;
+   const jmespath = {
+	   compile,
+	   registerFunction,
+	   search,
+	   tokenize,
+	   TreeInterpreter,
+	   TYPE_ANY,
+	   TYPE_ARRAY_NUMBER,
+	   TYPE_ARRAY_STRING,
+	   TYPE_ARRAY,
+	   TYPE_BOOLEAN,
+	   TYPE_EXPREF,
+	   TYPE_NULL,
+	   TYPE_NUMBER,
+	   TYPE_OBJECT,
+	   TYPE_STRING,
+   };
+
+   exports.Scope = Scope;
+   exports.TYPE_ANY = TYPE_ANY;
+   exports.TYPE_ARRAY = TYPE_ARRAY;
+   exports.TYPE_ARRAY_ARRAY = TYPE_ARRAY_ARRAY;
+   exports.TYPE_ARRAY_NUMBER = TYPE_ARRAY_NUMBER;
+   exports.TYPE_ARRAY_OBJECT = TYPE_ARRAY_OBJECT;
+   exports.TYPE_ARRAY_STRING = TYPE_ARRAY_STRING;
+   exports.TYPE_BOOLEAN = TYPE_BOOLEAN;
+   exports.TYPE_EXPREF = TYPE_EXPREF;
+   exports.TYPE_NULL = TYPE_NULL;
+   exports.TYPE_NUMBER = TYPE_NUMBER;
+   exports.TYPE_OBJECT = TYPE_OBJECT;
+   exports.TYPE_STRING = TYPE_STRING;
+   exports.TreeInterpreter = TreeInterpreter;
+   exports.compile = compile;
+   exports["default"] = jmespath;
+   exports.jmespath = jmespath;
+   exports.registerFunction = registerFunction;
+   exports.search = search;
+   exports.tokenize = tokenize;
+
+   Object.defineProperty(exports, '__esModule', { value: true });
+
+ }));
