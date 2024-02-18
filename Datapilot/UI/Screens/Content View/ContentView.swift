@@ -114,24 +114,29 @@ struct ContentView: View {
         List {
             ForEach(enumerated: data) { index, element in
                 if isContainer(element) {
-                    NavigationLink(destination: {
-						ContentView(value: element, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
-                    }, label: {
-                        HStack {
-                            ObjectTitleView(object: element, requestHeaders: viewModel.sharedHeaders)
-                            Spacer()
+					if isEmptyContainer(element) {
+						ObjectTitleView(object: element, requestHeaders: viewModel.sharedHeaders).any
+					} else {
+						
+						NavigationLink(destination: {
+							ContentView(value: element, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
+						}, label: {
+							HStack {
+								ObjectTitleView(object: element, requestHeaders: viewModel.sharedHeaders)
+								Spacer()
 #if canImport(UIKit)
 #else
-                            Image(systemName: "chevron.right")
+								Image(systemName: "chevron.right")
 #endif
-                        }
-                    }).any
+							}
+						}).any
+					}
                 } else {
                     cellFactory(element)
                 }
             }
 			
-			Text("END \(Emoji.random)").frame(maxWidth: .infinity).onAppear {
+			Text("END \(Emoji.random)").onAppear {
 				viewModel.tryLoadNextPage()
 			}
 		}.if(viewModel.isSearchable, modified: {
@@ -141,26 +146,32 @@ struct ContentView: View {
 		.any
     }
     
-    func rowView(with title: String, and content: Any) -> AnyView {
-        func simpleRow() -> AnyView {
-            HStack() {
-                ObjectTitleView(object: title, requestHeaders: viewModel.sharedHeaders)
-                ObjectTitleView(object: content, requestHeaders: viewModel.sharedHeaders, isSubLabel: true)
-            }.any
-        }
-        
-        if isContainer(content) || content is URL {
-            return NavigationLink(destination: {
+	func rowView(with title: String, and content: Any) -> AnyView {
+		func simpleRow() -> AnyView {
+			HStack() {
+				ObjectTitleView(object: title, requestHeaders: viewModel.sharedHeaders)
+				ObjectTitleView(object: content, requestHeaders: viewModel.sharedHeaders, isSubLabel: true)
+			}.any
+		}
+		
+		func link() -> AnyView {
+			return NavigationLink(destination: {
 				ContentView(value: content, sharedHeaders: viewModel.sharedHeaders, dataQuery: nil)
-            }, label: {
-                HStack {
-                    simpleRow()
+			}, label: {
+				HStack {
+					simpleRow()
 #if canImport(UIKit)
 #else
-                    Image(systemName: "chevron.right")
+					Image(systemName: "chevron.right")
 #endif
-                }
-            }).any
+				}
+			}).any
+		}
+		
+		if isContainer(content) {
+			return isNonEmptyContainer(content) ? link() : simpleRow()
+		} else if content is URL {
+            return link()
         } else {
             return simpleRow()
         }

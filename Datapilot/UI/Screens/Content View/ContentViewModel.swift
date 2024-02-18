@@ -51,17 +51,21 @@ class ContentViewModel: ObservableObject {
         
         switch value {
         case let url as URL:
-            self.loadData(request: .init(url: url)) { data in
-                onMain {
-					self.unqueriedData = data
-                }
-            }
+			onBG {
+				self.loadData(request: .init(url: url)) { data in
+					onMain {
+						self.unqueriedData = data
+					}
+				}
+			}
         case let request as URLRequest:
-            self.loadData(request: request) { data in
-                onMain {
-					self.unqueriedData = data
-                }
-            }
+			onBG {
+				self.loadData(request: request) { data in
+					onMain {
+						self.unqueriedData = data
+					}
+				}
+			}
         default:
 			self.unqueriedData = value
         }
@@ -102,9 +106,12 @@ class ContentViewModel: ObservableObject {
 	
 	func tryLoadNextPage() {
 		if let dict = unfilteredData as? [String: Any], let next = ObjectPropertyLens(object: dict).value(of: .next)?.0, let url = urlified(next) as? URL {
-			loadData(request: .init(url: url)) { value in
-				onMain {
-					self.unqueriedData = merging(self.unqueriedData as Any, value as Any)
+			onBG {
+				self.loadData(request: .init(url: url)) { value in
+					let newData = merging(self.unqueriedData as Any, value as Any)
+					onMain {
+						self.unqueriedData = newData
+					}
 				}
 			}
 		}
