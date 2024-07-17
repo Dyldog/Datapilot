@@ -11,4 +11,13 @@ import SwiftUI
 
 class QueryListViewModel: ObservableObject {
     @Published(key: "QUERIES") var queries: [Query] = []
+
+    func addQuery() {
+        objectWillChange.send()
+        queries.append(.init(title: "", url: "", query: "", headers: [], method: .get, postBody: ""))
+    }
+
+    func deleteQuery(at index: Int) {
+        queries.remove(at: index)
+    }
 }

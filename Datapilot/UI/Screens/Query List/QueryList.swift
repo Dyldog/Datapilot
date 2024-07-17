@@ -18,11 +18,12 @@ struct QueryList: View {
                 NavigationLink(query.displayTitle) {
                     QueryView(query: $viewModel.queries[index])
                 }
+            }.onDelete { indexes in
+                indexes.forEach { viewModel.deleteQuery(at: $0) }
             }
         }.toolbar {
             Button {
-                viewModel.objectWillChange.send()
-                viewModel.queries.append(.init(title: "", url: "", query: "", headers: [], method: .get, postBody: ""))
+                viewModel.addQuery()
             } label: {
                 Image(systemName: "plus")
             }
