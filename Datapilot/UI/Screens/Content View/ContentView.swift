@@ -184,26 +184,6 @@ struct ContentView: View {
     }
 }
 
-extension Dictionary where Key == String {
-    func objectProperties(visibleOnly: Bool = false) -> Self? {
-        let props = filter { property in
-            guard
-                let key = ObjectPropertyLens.ObjectProperty(rawValue: String(property.key))
-            else { return false }
-
-            return visibleOnly ? key.isVisibleProperty : true
-        }
-        return props.keys.isEmpty ? nil : props
-    }
-
-    var hasObjectProperties: Bool { objectProperties() != nil }
-    var hasVisibleProperties: Bool { objectProperties(visibleOnly: true) != nil }
-
-    func filteringObjectProperties() -> Self {
-        filter { !ObjectPropertyLens.ObjectProperty.allKeys.contains($0.key) }
-    }
-}
-
 #Preview {
     ContentView(value: "Hello", sharedHeaders: [:], dataQuery: nil)
 }

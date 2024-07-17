@@ -65,6 +65,26 @@ struct ObjectPropertyLens {
     }
 }
 
+extension Dictionary where Key == String {
+    func objectProperties(visibleOnly: Bool = false) -> Self? {
+        let props = filter { property in
+            guard
+                let key = ObjectPropertyLens.ObjectProperty(rawValue: String(property.key))
+            else { return false }
+
+            return visibleOnly ? key.isVisibleProperty : true
+        }
+        return props.keys.isEmpty ? nil : props
+    }
+
+    var hasObjectProperties: Bool { objectProperties() != nil }
+    var hasVisibleProperties: Bool { objectProperties(visibleOnly: true) != nil }
+
+    func filteringObjectProperties() -> Self {
+        filter { !ObjectPropertyLens.ObjectProperty.allKeys.contains($0.key) }
+    }
+}
+
 extension View {
     func styled(for property: ObjectPropertyLens.ObjectProperty, size: Int, isSublabel: Bool) -> some View {
         font(
