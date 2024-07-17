@@ -11,7 +11,7 @@ import SwiftUI
 struct DatapilotApp: App {
     var body: some Scene {
         WindowGroup {
-            NavigationView {
+            NavigationStack {
                 QueryList()
 					.navigationTitle(titles.randomElement()!)
             }
