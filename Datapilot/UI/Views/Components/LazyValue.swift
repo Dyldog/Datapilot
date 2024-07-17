@@ -8,12 +8,12 @@
 import DylKit
 import SwiftUI
 
-struct LazyValue: View {
-    let onLoad: (Any) -> AnyView
+struct LazyValue<Content: View>: View {
+    let onLoad: (Any) -> Content
 
     @StateObject var loader: ValueLoader
 
-    init(url: URL, headers: [String: String], onLoad: @escaping (Any) -> AnyView) {
+    init(url: URL, headers: [String: String], onLoad: @escaping (Any) -> Content) {
         self.onLoad = onLoad
         _loader = .init(wrappedValue: .init(url: url, headers: headers))
     }
