@@ -1,2 +1,5 @@
 Secrets.*
 xcuserdata
+
+buildServer.json
+.nvim

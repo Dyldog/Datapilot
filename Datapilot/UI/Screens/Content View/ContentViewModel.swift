@@ -153,7 +153,7 @@ class ContentViewModel: ObservableObject {
 		
 		let output = JSONQuery.query(query, in: json)
 		
-		print((try! JSONSerialization.data(withJSONObject: output)).string)
+		print((try! JSONSerialization.data(withJSONObject: output)).string!)
 	}
 }
 

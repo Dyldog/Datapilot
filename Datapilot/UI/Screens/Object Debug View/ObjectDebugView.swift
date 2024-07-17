@@ -8,19 +8,20 @@
 import SwiftUI
 
 struct ObjectDebugView: View {
-	let object: Any
-	
-	var objectText: String {
-		do {
-			return (try JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)).string
-		} catch {
-			return """
-			Error decoding:
-			\(error.localizedDescription)
-			"""
-		}
-	}
-	var body: some View {
-		TextEditor(text: .constant(objectText))
-	}
+    let object: Any
+
+    var objectText: String {
+        do {
+            return try (JSONSerialization.data(withJSONObject: object, options: .prettyPrinted)).string
+        } catch {
+            return """
+            Error decoding:
+            \(error.localizedDescription)
+            """
+        }
+    }
+
+    var body: some View {
+        TextEditor(text: .constant(objectText))
+    }
 }

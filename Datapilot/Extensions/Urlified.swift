@@ -1,5 +1,5 @@
 //
-//  URLIfied.swift
+//  Urlified.swift
 //  Datapilot
 //
 //  Created by Dylan Elliott on 1/2/2024.

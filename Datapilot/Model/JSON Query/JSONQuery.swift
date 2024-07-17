@@ -8,12 +8,18 @@
 import JavaScriptCore
 
 enum JSONQuery {
-	static func query(_ queryString: String, in json: String) -> Any {
-		let context = JSContext()!
-		let scriptURL = Bundle.main.url(forResource: "jmespath", withExtension: "js")!
-		let script = try! String(contentsOf: scriptURL)
-		context.evaluateScript(script)
-		let output = context.evaluateScript("jmespath.search(\(json), \"\(queryString)\")")
-		return output?.toObject()
-	}
+    static func query(_ queryString: String, in json: String) -> Any {
+        let context = JSContext()!
+        let scriptURL = Bundle.main.url(forResource: "jmespath", withExtension: "js")!
+        let script: String
+        do {
+            script = try String(contentsOf: scriptURL)
+        } catch {
+            return "Error loading SMESPath script: \(error.localizedDescription)"
+        }
+
+        context.evaluateScript(script)
+        let output = context.evaluateScript("jmespath.search(\(json), \"\(queryString)\")")
+        return output?.toObject() as Any
+    }
 }

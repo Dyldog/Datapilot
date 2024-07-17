@@ -13,8 +13,9 @@ extension Dictionary where Key == String {
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "_", with: "")
     }
+
     var titleValue: String? {
-        let mapped = self.reduce(into: [:], { $0[sanitisedKey(for: $1.key)] = $1.value })
+        let mapped = reduce(into: [:]) { $0[sanitisedKey(for: $1.key)] = $1.value }
         return (mapped["title"] ?? mapped["name"] ?? mapped["id"]) as? String
     }
 }
