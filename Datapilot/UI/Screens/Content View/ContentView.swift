@@ -5,8 +5,8 @@
 //  Created by Dylan Elliott on 1/2/2024.
 //
 
-import DylKit
 import SwiftUI
+import DylKit
 
 struct ContentView: View {
     @StateObject var viewModel: ContentViewModel
@@ -27,9 +27,7 @@ struct ContentView: View {
         if let data = viewModel.data {
             ObjectView(data: data, requestHeaders: viewModel.sharedHeaders, searchText: $viewModel.searchText, loadNextPage: viewModel.tryLoadNextPage)
         } else {
-            VStack {
-                loadingView
-            }
+            loadingView
         }
     }
 
@@ -38,11 +36,7 @@ struct ContentView: View {
             view.navigationTitle(Text(title))
         }
         .toolbar {
-            Button {
-                showDebug = true
-            } label: {
-                Image(systemName: "ant.fill")
-            }
+            Button(systemName: "ant.fill") { showDebug = true }
         }
         .sheet(isPresented: $showDebug) {
             ObjectDebugView(object: viewModel.data as Any)
@@ -50,18 +44,10 @@ struct ContentView: View {
     }
 
     var loadingView: some View {
-        ProgressView()
-            .progressViewStyle(.circular)
-    }
-
-    func chevroned<T: View>(_ view: T) -> AnyView {
-        return HStack {
-            view
-            #if canImport(UIKit)
-            #else
-                Image(systemName: "chevron.right")
-            #endif
-        }.any
+        VStack {
+            ProgressView()
+                .progressViewStyle(.circular)
+        }
     }
 }
 

@@ -27,9 +27,7 @@
 		F71F6FC8D848D4B385C6EE25 /* Emojis.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40448818D1C95157B8B5F4E /* Emojis.swift */; };
 		FB546B705077976697C21BED /* ValueLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = F41F5283CD40F41FE55FE3B3 /* ValueLoader.swift */; };
 		FC3284B82B7CEBF700DBBB5F /* JSONQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */; };
-		FC3284BC2B7CED1B00DBBB5F /* JMESPath.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284BB2B7CED1B00DBBB5F /* JMESPath.swift */; };
 		FC3284C42B7CEDE000DBBB5F /* DatapilotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */; };
-		FC850B552B7CF8FA007294D3 /* trackers.js in Resources */ = {isa = PBXBuildFile; fileRef = FC850B542B7CF8FA007294D3 /* trackers.js */; };
 		FC850B572B7CF990007294D3 /* jmespath.js in Resources */ = {isa = PBXBuildFile; fileRef = FC850B562B7CF990007294D3 /* jmespath.js */; };
 		FC850B5C2B7DD2CA007294D3 /* ObjectDebugView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */; };
 		FCD756FF43AFE2F690584518 /* Published+UserDefaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB7B01205C3E778DE44566A /* Published+UserDefaults.swift */; };
@@ -42,7 +40,6 @@
 		FCE9698B2B6BCC2C00748A3A /* Urlified.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698A2B6BCC2C00748A3A /* Urlified.swift */; };
 		FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */; };
 		FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */; };
-		FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE969912B6BCC8900748A3A /* Secrets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,10 +74,8 @@
 		F41F5283CD40F41FE55FE3B3 /* ValueLoader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ValueLoader.swift; sourceTree = "<group>"; };
 		F4BA7B7B8FAAC49B0B41883B /* Query.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Query.swift; sourceTree = "<group>"; };
 		FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONQuery.swift; sourceTree = "<group>"; };
-		FC3284BB2B7CED1B00DBBB5F /* JMESPath.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JMESPath.swift; sourceTree = "<group>"; };
 		FC3284C12B7CEDE000DBBB5F /* DatapilotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DatapilotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC3284C32B7CEDE000DBBB5F /* DatapilotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatapilotTests.swift; sourceTree = "<group>"; };
-		FC850B542B7CF8FA007294D3 /* trackers.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = trackers.js; sourceTree = "<group>"; };
 		FC850B562B7CF990007294D3 /* jmespath.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = jmespath.js; sourceTree = "<group>"; };
 		FC850B5B2B7DD2CA007294D3 /* ObjectDebugView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectDebugView.swift; sourceTree = "<group>"; };
 		FCE969642B6B5F1A00748A3A /* Datapilot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Datapilot.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -93,7 +88,6 @@
 		FCE9698A2B6BCC2C00748A3A /* Urlified.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Urlified.swift; sourceTree = "<group>"; };
 		FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IsContainer.swift; sourceTree = "<group>"; };
 		FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
-		FCE969912B6BCC8900748A3A /* Secrets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Secrets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,9 +171,7 @@
 			isa = PBXGroup;
 			children = (
 				FC850B562B7CF990007294D3 /* jmespath.js */,
-				FC850B542B7CF8FA007294D3 /* trackers.js */,
 				FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */,
-				FC3284BB2B7CED1B00DBBB5F /* JMESPath.swift */,
 			);
 			path = "JSON Query";
 			sourceTree = "<group>";
@@ -287,7 +279,6 @@
 			isa = PBXGroup;
 			children = (
 				FC3284B62B7CEBDD00DBBB5F /* JSON Query */,
-				FCE969912B6BCC8900748A3A /* Secrets.swift */,
 				E6BBD2D9537CC2EA7A89DFA1 /* Query */,
 				8317D019291A205508F8AA93 /* Lenses */,
 			);
@@ -373,7 +364,7 @@
 			);
 			mainGroup = FCE9695B2B6B5F1A00748A3A;
 			packageReferences = (
-				FCE969762B6B92D000748A3A /* XCLocalSwiftPackageReference "DylKit" */,
+				FCE969762B6B92D000748A3A /* XCLocalSwiftPackageReference "../DylKit" */,
 			);
 			productRefGroup = FCE969652B6B5F1A00748A3A /* Products */;
 			projectDirPath = "";
@@ -400,7 +391,6 @@
 				FCE969702B6B5F2000748A3A /* Preview Assets.xcassets in Resources */,
 				FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */,
 				FC850B572B7CF990007294D3 /* jmespath.js in Resources */,
-				FC850B552B7CF8FA007294D3 /* trackers.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -420,14 +410,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				FCE9696A2B6B5F1A00748A3A /* ContentView.swift in Sources */,
-				FCE969922B6BCC8900748A3A /* Secrets.swift in Sources */,
 				FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */,
 				FC3284B82B7CEBF700DBBB5F /* JSONQuery.swift in Sources */,
 				FCE9698B2B6BCC2C00748A3A /* Urlified.swift in Sources */,
 				FCE969682B6B5F1A00748A3A /* DatapilotApp.swift in Sources */,
 				FCE969852B6BCBEB00748A3A /* Dictionary+Title.swift in Sources */,
 				FC850B5C2B7DD2CA007294D3 /* ObjectDebugView.swift in Sources */,
-				FC3284BC2B7CED1B00DBBB5F /* JMESPath.swift in Sources */,
 				FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */,
 				D316D8906A3D1AA86CFA8950 /* LazyValue.swift in Sources */,
 				35841A51A063AEA49013502E /* RoundedCorner.swift in Sources */,
@@ -727,7 +715,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		FCE969762B6B92D000748A3A /* XCLocalSwiftPackageReference "DylKit" */ = {
+		FCE969762B6B92D000748A3A /* XCLocalSwiftPackageReference "../DylKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../DylKit;
 		};
