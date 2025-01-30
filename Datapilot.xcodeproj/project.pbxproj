@@ -40,6 +40,7 @@
 		FCE9698B2B6BCC2C00748A3A /* Urlified.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698A2B6BCC2C00748A3A /* Urlified.swift */; };
 		FCE9698D2B6BCC3F00748A3A /* IsContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */; };
 		FCE9698F2B6BCC6A00748A3A /* ContentViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */; };
+		FCF1F0032D4AFBC70058282A /* jmespath_extensions.js in Resources */ = {isa = PBXBuildFile; fileRef = FCF1F0022D4AFBC70058282A /* jmespath_extensions.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -88,6 +89,7 @@
 		FCE9698A2B6BCC2C00748A3A /* Urlified.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Urlified.swift; sourceTree = "<group>"; };
 		FCE9698C2B6BCC3F00748A3A /* IsContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IsContainer.swift; sourceTree = "<group>"; };
 		FCE9698E2B6BCC6A00748A3A /* ContentViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentViewModel.swift; sourceTree = "<group>"; };
+		FCF1F0022D4AFBC70058282A /* jmespath_extensions.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = jmespath_extensions.js; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,6 +173,7 @@
 			isa = PBXGroup;
 			children = (
 				FC850B562B7CF990007294D3 /* jmespath.js */,
+				FCF1F0022D4AFBC70058282A /* jmespath_extensions.js */,
 				FC3284B72B7CEBF700DBBB5F /* JSONQuery.swift */,
 			);
 			path = "JSON Query";
@@ -388,6 +391,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FCF1F0032D4AFBC70058282A /* jmespath_extensions.js in Resources */,
 				FCE969702B6B5F2000748A3A /* Preview Assets.xcassets in Resources */,
 				FCE9696C2B6B5F2000748A3A /* Assets.xcassets in Resources */,
 				FC850B572B7CF990007294D3 /* jmespath.js in Resources */,
