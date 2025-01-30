@@ -16,8 +16,8 @@ struct ObjectListView<T, Content: View>: View {
 
     var body: some View {
         List {
-            ForEach(enumerated: data) { _, element in
-                view(for: element)
+            ForEach(enumerated: data) { index, element in
+                view(for: element, at: index)
             }
 
             Text("END \(Emoji.random)").onAppear {
@@ -30,7 +30,7 @@ struct ObjectListView<T, Content: View>: View {
     }
 
     @ViewBuilder
-    func view(for element: T) -> some View {
+    func view(for element: T, at index: Int) -> some View {
         if isContainer(element) {
             if isEmptyContainer(element) {
                 ObjectTitleView(object: element, requestHeaders: requestHeaders)
@@ -39,7 +39,7 @@ struct ObjectListView<T, Content: View>: View {
                     ContentView(value: element, sharedHeaders: requestHeaders, dataQuery: nil)
                 }, label: {
                     HStack {
-                        ObjectTitleView(object: element, requestHeaders: requestHeaders)
+                        ObjectTitleView(object: element, index: index, requestHeaders: requestHeaders)
                         Spacer()
                         #if canImport(UIKit)
                         #else

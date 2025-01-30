@@ -9,20 +9,34 @@ import SwiftUI
 
 struct ObjectTitleView: View {
     let lens: ObjectPropertyLens
+    let index: Int?
     var object: Any { lens.object }
     let requestHeaders: [String: String]
     let isSubLabel: Bool
 
-    init(object: Any, requestHeaders: [String: String], isSubLabel: Bool = false) {
+    init(object: Any, index: Int? = nil, requestHeaders: [String: String], isSubLabel: Bool = false) {
         self.requestHeaders = requestHeaders
         self.isSubLabel = isSubLabel
+        self.index = index
         lens = .init(object: object)
     }
 
+    @ViewBuilder
     var titleLabel: some View {
-        let (title, size) = lens.value(of: .title) ?? (object, 0)
-        return defaultTitle(for: title)
-            .styled(for: .title, size: size, isSublabel: isSubLabel)
+        if let (titles, size) = lens.pluralValue(of: .title) {
+            VStack(alignment: .leading) {
+                ForEach(titles) { title in
+                    defaultTitle(for: title)
+//                        .frame(maxWidth: .infinity)
+                       .styled(for: .title, size: size, isSublabel: isSubLabel)
+                }
+            }
+        } else {
+            let (title, size) = lens.value(of: .title) ?? (object, 0)
+            defaultTitle(for: title)
+//                .frame(maxWidth: .infinity)
+                .styled(for: .title, size: size, isSublabel: isSubLabel)
+        }
     }
 
     func label(for property: ObjectPropertyLens.ObjectProperty) -> (some View)? {
@@ -31,52 +45,54 @@ struct ObjectTitleView: View {
     }
 
     var body: some View {
-        HStack {
-            label(for: .pretitle)
-                .frame(minWidth: 0)
+        HStack() {
+            if let pretitleLabel = label(for: .pretitle) {
+                pretitleLabel
+            }
 
             VStack(alignment: isSubLabel ? .trailing : .leading) {
                 titleLabel
-                    .frame(alignment: .trailing)
-                    .frame(minWidth: 0)
-                label(for: .subtitle)
-                    .frame(minWidth: 0)
+
+                if let subtitleLabel = label(for: .subtitle) {
+                    subtitleLabel
+                }
             }
 
-            Spacer()
-
-            label(for: .posttitle)?
-                .foregroundStyle(.gray)
-                .minimumScaleFactor(0.5)
-                .frame(minWidth: 0)
-            //				.frame(maxWidth: 140)
+            if let postLabel = label(for: .posttitle) {
+                Spacer()
+                
+                postLabel
+                    .foregroundStyle(.gray)
+                    .minimumScaleFactor(0.5)
+                    .frame(maxWidth: .infinity)
+            }
         }
-        .multilineTextAlignment(isSubLabel ? .trailing : .leading)
-        //		.frame(minWidth: 0, maxWidth: .infinity)
+//        .multilineTextAlignment(isSubLabel ? .trailing : .leading)
     }
 
+    @ViewBuilder
     private func defaultTitle(for object: Any) -> some View {
         switch object {
         case let string as String:
-            return Text(string).any
+            Text(string)
         case let array as [Any]:
-            return Text("\(array.count) items").any
+            Text("\(array.count) items")
         case let dictionary as [String: Any]:
-            return Text(dictionary.titleValue ?? "").any
+            Text(dictionary.titleValue ?? index.map { "Item \($0)" } ?? "No title found")
         case let url as URL:
-            return LazyValue(url: url, headers: requestHeaders) { value in
+            LazyValue(url: url, headers: requestHeaders) { value in
                 ObjectTitleView(object: value, requestHeaders: requestHeaders).any
-            }.any
+            }
         case let bool as Bool:
-            return Text(bool ? "true" : "false").any
+            Text(bool ? "true" : "false")
         case let float as Float:
-            return Text("\(float)").any
+            Text("\(float)")
         case let int as Int:
-            return Text("\(int)").any
+            Text("\(int)")
         case is NSNull:
-            return Text("null").any
+            Text("null")
         default:
-            return Text("TODO").any
+            Text("TODO")
         }
     }
 }

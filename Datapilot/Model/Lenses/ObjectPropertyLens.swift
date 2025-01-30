@@ -17,6 +17,7 @@ struct ObjectPropertyLens {
         case filter
 
         var key: String { "_\(rawValue)" }
+        var pluralKey: String { "_\(rawValue)" }
 
         /// Initialises with a "key" of the form "_<RAW_VALUE>"
         init?(key: String) {
@@ -50,7 +51,9 @@ struct ObjectPropertyLens {
             }
         }
 
-        static var allKeys: [String] { allCases.map { $0.key } }
+        private static var allSingularKeys: [String] { allCases.map { $0.key } }
+        private static var allPluralKeys: [String] { allCases.map { $0.key + "s" } }
+        static var allKeys: [String] { allSingularKeys + allPluralKeys }
     }
 
     let object: Any
@@ -59,6 +62,12 @@ struct ObjectPropertyLens {
         object as? [String: Any]
     }
 
+    func pluralValue(of property: ObjectProperty) -> ([Any], Int)? {
+        guard let value = objectAsDict?.first(where: { $0.key.starts(with: property.pluralKey) }) else { return nil }
+        guard let arrayValue = value.value as? [Any] else { return nil }
+        return (arrayValue, Int(value.key.replacingOccurrences(of: property.key, with: "", options: .anchored)) ?? 0)
+    }
+    
     func value(of property: ObjectProperty) -> (Any, Int)? {
         guard let value = objectAsDict?.first(where: { $0.key.starts(with: property.key) }) else { return nil }
         return (value.value, Int(value.key.replacingOccurrences(of: property.key, with: "", options: .anchored)) ?? 0)
