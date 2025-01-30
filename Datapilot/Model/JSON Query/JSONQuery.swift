@@ -18,11 +18,16 @@ enum JSONQuery {
             return "Error loading script: \(error.localizedDescription)"
         }
         
-        let output = context.evaluateScript("jmespath.search(\(json), \"\(queryString)\")")
+        let output = context.evaluateScript("jmespath.search(\(json), \"\(queryString.querySanitised)\")")
         return output?.toObject() as Any
     }
 }
 
+private extension String {
+    var querySanitised: String {
+        components(separatedBy: .whitespacesAndNewlines).joined(separator: " ")
+    }
+}
 private extension JSContext {
     func addScript(_ name: String) throws {
         let scriptURL = Bundle.main.url(forResource: name, withExtension: "js")!

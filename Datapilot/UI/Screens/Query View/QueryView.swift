@@ -9,7 +9,8 @@ import DylKit
 import SwiftUI
 
 struct QueryView: View {
-    @Binding var query: Query
+    @Binding var queryBinding: Query
+    @State var query: Query
     @State var url: URL?
     @State var queryEnabled: Bool = true
     
@@ -20,11 +21,13 @@ struct QueryView: View {
     }
 
     init(query: Binding<Query>) {
-        _query = query
+        _queryBinding = query
+        _query = .init(wrappedValue: query.wrappedValue)
     }
 
     var body: some View {
-        GeometryReader { geometry in
+        Self._printChanges()
+        return GeometryReader { geometry in
             ScrollView {
                 VStack(spacing: 20) {
                     titleView
@@ -40,6 +43,9 @@ struct QueryView: View {
             .background(Color.black)
             .foregroundStyle(.white)
             .navigationBarTitleDisplayMode(.inline)
+            .onChange(of: query) { newValue in
+                _queryBinding.wrappedValue = newValue
+            }
         }
     }
     
@@ -77,10 +83,12 @@ struct QueryView: View {
                 .toggleStyle(.switch)
                 .labelsHidden()
         }
-
-        TextEditor(text: $query.query)
+        
+        TextField("Query", text: $query.query, axis: .vertical)
+            .textFieldStyle(.roundedBorder)
+            .lineLimit(nil)
+            .background(.white)
             .foregroundStyle(.black)
-            .frame(height: 100)
             .cornerRadius(10)
     }
     
@@ -165,9 +173,11 @@ struct QueryView: View {
         .pickerStyle(.segmented)
 
         if query.method == .post {
-            TextEditor(text: $query.postBody)
+            TextField("Post Body", text: $query.postBody, axis: .vertical)
+                .textFieldStyle(.roundedBorder)
+                .lineLimit(nil)
+                .background(.white)
                 .foregroundStyle(.black)
-                .frame(height: 200)
                 .cornerRadius(10)
         }
     }
