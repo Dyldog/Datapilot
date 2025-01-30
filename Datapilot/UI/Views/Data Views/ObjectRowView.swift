@@ -16,6 +16,7 @@ struct ObjectRowView: View {
         func simpleRow() -> AnyView {
             HStack {
                 ObjectTitleView(object: title, requestHeaders: requestHeaders)
+                Spacer()
                 ObjectTitleView(object: content, requestHeaders: requestHeaders, isSubLabel: true)
             }.any
         }

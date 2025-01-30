@@ -64,7 +64,6 @@ struct ObjectTitleView: View {
                 postLabel
                     .foregroundStyle(.gray)
                     .minimumScaleFactor(0.5)
-                    .frame(maxWidth: .infinity)
             }
         }
 //        .multilineTextAlignment(isSubLabel ? .trailing : .leading)
