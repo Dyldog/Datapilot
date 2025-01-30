@@ -33,6 +33,7 @@ struct QueryView: View {
                     titleView
                     urlView
                     queryView
+                    headersView
                     methodView
                     Spacer()
                     goButton
