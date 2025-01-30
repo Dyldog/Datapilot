@@ -77,7 +77,7 @@ struct ObjectTitleView: View {
         case let array as [Any]:
             Text("\(array.count) items")
         case let dictionary as [String: Any]:
-            Text(dictionary.titleValue ?? index.map { "Item \($0)" } ?? "No title found")
+            Text(dictionary.titleValue ?? index.map { "Item \($0)" } ?? "")
         case let url as URL:
             LazyValue(url: url, headers: requestHeaders) { value in
                 ObjectTitleView(object: value, requestHeaders: requestHeaders).any
