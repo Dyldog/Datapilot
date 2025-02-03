@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import DataPilotKit
 
 @main
 struct DatapilotApp: App {

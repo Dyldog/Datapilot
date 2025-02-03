@@ -36,7 +36,7 @@ struct ObjectListView<T, Content: View>: View {
                 ObjectTitleView(object: element, requestHeaders: requestHeaders)
             } else {
                 NavigationLink(destination: {
-                    ContentView(value: element, sharedHeaders: requestHeaders, dataQuery: nil)
+                    DataPilotView(value: element, sharedHeaders: requestHeaders, dataQuery: nil)
                 }, label: {
                     HStack {
                         ObjectTitleView(object: element, index: index, requestHeaders: requestHeaders)

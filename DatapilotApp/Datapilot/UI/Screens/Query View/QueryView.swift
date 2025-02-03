@@ -7,6 +7,7 @@
 
 import DylKit
 import SwiftUI
+import DataPilotKit
 
 struct QueryView: View {
     @Binding var queryBinding: Query
@@ -60,7 +61,7 @@ struct QueryView: View {
         TextField("URL", text: $query.url)
             .font(.largeTitle)
             .navigationDestination(for: $url) { url in
-                ContentView(
+                DataPilotView(
                     value: request(with: url),
                     sharedHeaders: sharedHeaders,
                     dataQuery: queryEnabled ? query.query : nil

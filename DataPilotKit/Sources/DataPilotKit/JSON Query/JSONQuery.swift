@@ -5,6 +5,7 @@
 //  Created by Dylan Elliott on 14/2/2024.
 //
 
+import Foundation
 import JavaScriptCore
 
 enum JSONQuery {
@@ -30,7 +31,7 @@ private extension String {
 }
 private extension JSContext {
     func addScript(_ name: String) throws {
-        let scriptURL = Bundle.main.url(forResource: name, withExtension: "js")!
+        let scriptURL = Bundle.module.url(forResource: name, withExtension: "js")!
         let script: String = try String(contentsOf: scriptURL)
         evaluateScript(script)
     }

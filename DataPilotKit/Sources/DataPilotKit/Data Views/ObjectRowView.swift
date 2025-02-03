@@ -23,7 +23,7 @@ struct ObjectRowView: View {
 
         func link() -> AnyView {
             return NavigationLink(destination: {
-                ContentView(value: content, sharedHeaders: requestHeaders, dataQuery: nil)
+                DataPilotView(value: content, sharedHeaders: requestHeaders, dataQuery: nil)
             }, label: {
                 HStack {
                     simpleRow()

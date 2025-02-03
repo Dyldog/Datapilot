@@ -59,8 +59,8 @@ extension Character {
     }
 }
 
-enum Emoji {
-    static var random: String {
+public enum Emoji {
+    public static var random: String {
         let value = (0x1F600 ... 0x1F64F).randomElement()!
 
         if let scalar = UnicodeScalar(value) {

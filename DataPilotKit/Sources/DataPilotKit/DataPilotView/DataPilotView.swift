@@ -8,11 +8,18 @@
 import SwiftUI
 import DylKit
 
-struct ContentView: View {
-    @StateObject var viewModel: ContentViewModel
+public struct DataPilotView: View {
+    @StateObject var viewModel: DataPilotViewModel
+    
+    let showDebugButton: Bool
     @State var showDebug: Bool = false
 
-    init(value: Any, sharedHeaders: [String: String], dataQuery: String?) {
+    public init(
+        value: Any,
+        sharedHeaders: [String: String] = [:],
+        dataQuery: String?,
+        showDebugButton: Bool = true
+    ) {
         _viewModel = .init(
             wrappedValue: .init(
                 value: urlified(value),
@@ -20,6 +27,8 @@ struct ContentView: View {
                 dataQuery: dataQuery
             )
         )
+        
+        self.showDebugButton = showDebugButton
     }
 
     @ViewBuilder
@@ -31,12 +40,14 @@ struct ContentView: View {
         }
     }
 
-    var body: some View {
+    public var body: some View {
         inner.if((viewModel.data as? [String: Any])?.titleValue) { view, title in
             view.navigationTitle(Text(title))
         }
         .toolbar {
-            Button(systemName: "ant.fill") { showDebug = true }
+            if showDebugButton {
+                Button(systemName: "ant.fill") { showDebug = true }
+            }
         }
         .sheet(isPresented: $showDebug) {
             ObjectDebugView(object: viewModel.data as Any)
@@ -52,5 +63,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(value: "Hello", sharedHeaders: [:], dataQuery: nil)
+    DataPilotView(value: "Hello", sharedHeaders: [:], dataQuery: nil)
 }

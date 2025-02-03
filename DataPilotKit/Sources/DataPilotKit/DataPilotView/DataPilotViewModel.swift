@@ -8,7 +8,7 @@
 import DylKit
 import Foundation
 
-class ContentViewModel: ObservableObject {
+class DataPilotViewModel: ObservableObject {
     let sharedHeaders: [String: String]
     let dataQuery: String?
 

@@ -26,7 +26,7 @@ struct ObjectView: View {
                 searchText: searchText
             ) { value in
                 NavigationLink {
-                    ContentView(
+                    DataPilotView(
                         value: urlified(value),
                         sharedHeaders: requestHeaders,
                         dataQuery: nil // Pretty sure this should be nil

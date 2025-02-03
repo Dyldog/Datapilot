@@ -3,3 +3,4 @@ xcuserdata
 
 buildServer.json
 .nvim
+.DS_Store
